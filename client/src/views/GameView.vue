@@ -41,7 +41,12 @@
         <p class="text-slate-400 text-sm">
           Utilise les flèches pour diriger le poulpe
         </p>
-        <button @click="startGame" class="btn-primary text-sm">Démarrer</button>
+        <button
+          @click="startGame"
+          class="px-6 py-3 rounded-lg font-semibold bg-game-accent hover:bg-indigo-500 text-white transition-all text-sm"
+        >
+          Démarrer
+        </button>
       </div>
 
       <!-- Écran Game Over -->
@@ -59,12 +64,18 @@
         <p v-if="saved" class="text-green-400 text-xs">Score sauvegardé !</p>
 
         <div class="flex gap-3 mt-2">
-          <button @click="startGame" class="btn-primary text-sm">
+          <button
+            @click="startGame"
+            class="px-6 py-3 rounded-lg font-semibold bg-game-accent hover:bg-indigo-500 text-white transition-all text-sm"
+          >
             Rejouer
           </button>
-          <RouterLink to="/leaderboard" class="btn-secondary text-sm"
-            >Classement</RouterLink
+          <RouterLink
+            to="/leaderboard"
+            class="px-6 py-3 rounded-lg font-semibold bg-game-surface hover:bg-game-border text-white border border-game-border transition-all text-sm"
           >
+            Classement
+          </RouterLink>
         </div>
       </div>
     </div>
@@ -72,17 +83,29 @@
     <!-- Contrôles mobile -->
     <div class="grid grid-cols-3 gap-2 mt-2 sm:hidden">
       <div />
-      <button @click="emitKey('ArrowUp')" class="btn-secondary py-4 text-lg">
+      <button
+        @click="emitKey('ArrowUp')"
+        class="px-4 py-4 rounded-lg bg-game-surface hover:bg-game-border text-white border border-game-border transition-all text-lg"
+      >
         ↑
       </button>
       <div />
-      <button @click="emitKey('ArrowLeft')" class="btn-secondary py-4 text-lg">
+      <button
+        @click="emitKey('ArrowLeft')"
+        class="px-4 py-4 rounded-lg bg-game-surface hover:bg-game-border text-white border border-game-border transition-all text-lg"
+      >
         ←
       </button>
-      <button @click="emitKey('ArrowDown')" class="btn-secondary py-4 text-lg">
+      <button
+        @click="emitKey('ArrowDown')"
+        class="px-4 py-4 rounded-lg bg-game-surface hover:bg-game-border text-white border border-game-border transition-all text-lg"
+      >
         ↓
       </button>
-      <button @click="emitKey('ArrowRight')" class="btn-secondary py-4 text-lg">
+      <button
+        @click="emitKey('ArrowRight')"
+        class="px-4 py-4 rounded-lg bg-game-surface hover:bg-game-border text-white border border-game-border transition-all text-lg"
+      >
         →
       </button>
     </div>
@@ -90,7 +113,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, watch, onMounted, onUnmounted } from "vue";
 import { useGame } from "@/composables/useGame";
 import api from "@/lib/api";
 
@@ -119,8 +142,6 @@ async function startGame() {
   game.start();
 }
 
-// Surveille la fin de partie pour sauvegarder le score
-import { watch } from "vue";
 watch(game.state, async (val) => {
   if (val !== "dead" || game.score.value === 0) return;
   saving.value = true;
@@ -131,14 +152,13 @@ watch(game.state, async (val) => {
       duration: game.getDuration(),
     });
     saved.value = true;
-  } catch (e) {
+  } catch {
     saveError.value = "Score non sauvegardé.";
   } finally {
     saving.value = false;
   }
 });
 
-// Contrôles mobiles
 function emitKey(key) {
   game.handleKey({ key, preventDefault: () => {} });
 }

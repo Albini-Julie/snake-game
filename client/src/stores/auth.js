@@ -14,6 +14,9 @@ export const useAuthStore = defineStore('auth', () => {
   // Charge le profil depuis l'API Express
   async function fetchProfile() {
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+
       const { data } = await api.get('/users/me')
       profile.value = data
     } catch {
@@ -24,16 +27,19 @@ export const useAuthStore = defineStore('auth', () => {
   // Initialise la session au démarrage de l'app
   async function init() {
     loading.value = true
+
+    // Attend que Supabase ait restauré la session depuis le localStorage
     const { data } = await supabase.auth.getSession()
     user.value = data.session?.user ?? null
+
     if (user.value) await fetchProfile()
     loading.value = false
 
-    // Écoute les changements d'état auth (login/logout)
+    // Écoute les changements APRÈS l'init
     supabase.auth.onAuthStateChange(async (event, session) => {
       user.value = session?.user ?? null
-      if (user.value) await fetchProfile()
-      else profile.value = null
+      if (event === 'SIGNED_IN')  await fetchProfile()
+      if (event === 'SIGNED_OUT') profile.value = null
     })
   }
 

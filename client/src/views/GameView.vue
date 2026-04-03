@@ -25,6 +25,8 @@
         :saving="saving"
         :saved="saved"
         :save-error="saveError"
+        :advice="advice"
+        :advice-loading="adviceLoading"
         @start="startGame"
         @leaderboard="router.push('/leaderboard')"
       />
@@ -63,10 +65,10 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted, computed } from "vue";
+import { ref, watch, computed, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
-import { useGame } from "@/composables/useGame";
 import { useAuthStore } from "@/stores/auth";
+import { useGame } from "@/composables/useGame";
 import api from "@/lib/api";
 import AppButton from "@/components/ui/AppButton.vue";
 import GameHud from "@/components/game/GameHud.vue";
@@ -76,13 +78,8 @@ const CANVAS_W = 400;
 const CANVAS_H = 400;
 
 const router = useRouter();
-const canvasRef = ref(null);
-
-const saving = ref(false);
-const saved = ref(false);
-const saveError = ref("");
-
 const auth = useAuthStore();
+const canvasRef = ref(null);
 
 const AVATAR_COLORS = {
   "Poulpe bleu": 210,
@@ -99,6 +96,12 @@ const avatarColor = computed(
 
 const game = useGame(canvasRef, avatarColor);
 
+const saving = ref(false);
+const saved = ref(false);
+const saveError = ref("");
+const advice = ref("");
+const adviceLoading = ref(false);
+
 onMounted(() => {
   game.init(canvasRef.value);
   window.addEventListener("keydown", game.handleKey);
@@ -111,24 +114,44 @@ onUnmounted(() => {
 async function startGame() {
   saved.value = false;
   saveError.value = "";
+  advice.value = "";
+  adviceLoading.value = false;
   game.start();
 }
 
 watch(game.state, async (val) => {
   if (val !== "dead" || game.score.value === 0) return;
+
+  // Sauvegarde du score et conseil IA en parallèle
   saving.value = true;
+  adviceLoading.value = true;
   saveError.value = "";
-  try {
-    await api.post("/scores", {
+
+  const [scoreResult, adviceResult] = await Promise.allSettled([
+    api.post("/scores", {
       score: game.score.value,
       duration: game.getDuration(),
-    });
+    }),
+    api.post("/ai/advice", {
+      score: game.score.value,
+      duration: game.getDuration(),
+      level: game.level.value,
+    }),
+  ]);
+
+  // Score
+  if (scoreResult.status === "fulfilled") {
     saved.value = true;
-  } catch {
+  } else {
     saveError.value = "Score non sauvegardé.";
-  } finally {
-    saving.value = false;
   }
+  saving.value = false;
+
+  // Conseil IA
+  if (adviceResult.status === "fulfilled") {
+    advice.value = adviceResult.value.data.advice;
+  }
+  adviceLoading.value = false;
 });
 
 function emitKey(key) {

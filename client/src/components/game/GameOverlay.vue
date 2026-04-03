@@ -14,10 +14,25 @@
   <!-- Écran Game Over -->
   <div
     v-else-if="state === 'dead'"
-    class="absolute inset-0 flex flex-col items-center justify-center bg-game-bg/80 gap-5"
+    class="absolute inset-0 flex flex-col items-center justify-center bg-game-bg/80 gap-4 px-6"
   >
     <p class="font-game text-red-400 text-lg">GAME OVER</p>
     <p class="text-slate-300 text-sm">Score : {{ score }}</p>
+
+    <!-- Conseil IA -->
+    <div
+      class="w-full max-w-xs text-center min-h-[48px] flex items-center justify-center"
+    >
+      <p v-if="adviceLoading" class="text-slate-500 text-lg italic">
+        Le coach marin réfléchit...
+      </p>
+      <p
+        v-else-if="advice"
+        class="text-slate-300 text-lg italic leading-relaxed"
+      >
+        "{{ advice }}"
+      </p>
+    </div>
 
     <p v-if="saving" class="text-slate-400 text-xs">Sauvegarde du score...</p>
     <p v-if="saveError" class="text-red-400 text-xs">{{ saveError }}</p>
@@ -41,6 +56,8 @@ defineProps({
   saving: { type: Boolean, default: false },
   saved: { type: Boolean, default: false },
   saveError: { type: String, default: "" },
+  advice: { type: String, default: "" },
+  adviceLoading: { type: Boolean, default: false },
 });
 
 defineEmits(["start", "leaderboard"]);

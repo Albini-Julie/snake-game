@@ -14,7 +14,7 @@ async function callGemini(prompt) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { maxOutputTokens: 300, temperature: 0.9 },
+      generationConfig: { maxOutputTokens: 500, temperature: 0.9 },
     })
   })
 
@@ -44,7 +44,6 @@ router.get('/usernames', async (req, res) => {
 Règles strictes : sans espace, max 12 caractères chacun, séparés par des virgules, rien d'autre.
 Format exact : Pseudo1,Pseudo2,Pseudo3`
 )
-    console.log('Réponse Gemini:', text)
 
     const usernames = text.split(',').map(u => u.trim()).filter(Boolean).slice(0, 3)
 
@@ -82,18 +81,24 @@ router.post('/advice', async (req, res) => {
 
   try {
     const advice = await callGemini(
-      `Tu es un coach de jeu snake humoristique et marin.
-Un joueur vient de terminer une partie avec ces stats :
+  `Tu es un coach de jeu snake. Un joueur vient de terminer une partie :
 - Score : ${score} poissons mangés
 - Durée : ${durationSec} secondes
 - Niveau atteint : ${level}/5
 
-Donne-lui UN conseil court et personnalisé (max 2 phrases) basé sur ces stats.
-Si le score est faible (< 3), encourage-le avec humour.
-Si la durée est courte (< 10s), parle de la mort rapide.
-Si le score est élevé (> 10), félicite-le.
-Utilise le thème marin/poulpe. Réponds uniquement avec le conseil, sans introduction.`
-    )
+Donne UN conseil technique précis et actionnable sur COMMENT mieux jouer.
+Exemples de bons conseils :
+- "Longe les bords pour garder de la place au centre"
+- "Anticipe ta trajectoire 3 cases à l'avance pour éviter de te coincer"
+- "Mange les poissons qui sont loin des murs en premier"
+
+Règles strictes :
+- 1 seule phrase max
+- Pas de félicitations
+- Pas de métaphores marines
+- Uniquement un conseil de gameplay concret
+- Commence directement par le conseil`
+)
 
     if (!advice) {
       return res.status(500).json({ error: 'Impossible de générer un conseil' })

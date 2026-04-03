@@ -95,30 +95,82 @@ export function useGame(canvasRef) {
 
   // ── Dessin du fruit (étoile de mer) ──────────────────────────────────────────
   function drawFruit(fx, fy) {
-    const cx     = fx * CELL + CELL / 2
-    const cy     = fy * CELL + CELL / 2
-    const spikes = 5
-    const outer  = CELL * 0.4
-    const inner  = CELL * 0.18
+  const cx = fx * CELL + CELL / 2
+  const cy = fy * CELL + CELL / 2
 
-    ctx.save()
-    ctx.translate(cx, cy)
-    ctx.rotate(-Math.PI / 2)
-    ctx.beginPath()
-    for (let i = 0; i < spikes * 2; i++) {
-      const r   = i % 2 === 0 ? outer : inner
-      const ang = (i * Math.PI) / spikes
-      i === 0 ? ctx.moveTo(Math.cos(ang) * r, Math.sin(ang) * r)
-              : ctx.lineTo(Math.cos(ang) * r, Math.sin(ang) * r)
-    }
-    ctx.closePath()
-    ctx.fillStyle   = '#f97316'
-    ctx.strokeStyle = '#ea580c'
-    ctx.lineWidth   = 1
-    ctx.fill()
-    ctx.stroke()
-    ctx.restore()
-  }
+  ctx.save()
+  ctx.translate(cx, cy)
+
+  // Queue (triangle)
+  ctx.beginPath()
+  ctx.moveTo(-CELL * 0.28, 0)
+  ctx.lineTo(-CELL * 0.48, -CELL * 0.22)
+  ctx.lineTo(-CELL * 0.48,  CELL * 0.22)
+  ctx.closePath()
+  ctx.fillStyle = '#38bdf8'
+  ctx.fill()
+  ctx.strokeStyle = '#0284c7'
+  ctx.lineWidth = 0.8
+  ctx.stroke()
+
+  // Corps (ellipse)
+  ctx.beginPath()
+  ctx.ellipse(CELL * 0.05, 0, CELL * 0.32, CELL * 0.18, 0, 0, Math.PI * 2)
+  ctx.fillStyle = '#38bdf8'
+  ctx.fill()
+  ctx.strokeStyle = '#0284c7'
+  ctx.lineWidth = 0.8
+  ctx.stroke()
+
+  // Ventre (ellipse plus claire)
+  ctx.beginPath()
+  ctx.ellipse(CELL * 0.05, CELL * 0.05, CELL * 0.2, CELL * 0.1, 0, 0, Math.PI * 2)
+  ctx.fillStyle = '#bae6fd'
+  ctx.fill()
+
+  // Nageoire dorsale
+  ctx.beginPath()
+  ctx.moveTo(-CELL * 0.05, -CELL * 0.18)
+  ctx.lineTo( CELL * 0.05, -CELL * 0.32)
+  ctx.lineTo( CELL * 0.2,  -CELL * 0.18)
+  ctx.closePath()
+  ctx.fillStyle = '#0ea5e9'
+  ctx.fill()
+
+  // Oeil
+  ctx.beginPath()
+  ctx.arc(CELL * 0.22, -CELL * 0.04, CELL * 0.07, 0, Math.PI * 2)
+  ctx.fillStyle = 'white'
+  ctx.fill()
+  ctx.beginPath()
+  ctx.arc(CELL * 0.24, -CELL * 0.04, CELL * 0.04, 0, Math.PI * 2)
+  ctx.fillStyle = '#1e1b4b'
+  ctx.fill()
+  // Reflet
+  ctx.beginPath()
+  ctx.arc(CELL * 0.26, -CELL * 0.06, CELL * 0.015, 0, Math.PI * 2)
+  ctx.fillStyle = 'white'
+  ctx.fill()
+
+  // Bouche
+  ctx.beginPath()
+  ctx.arc(CELL * 0.34, CELL * 0.04, CELL * 0.05, 0, Math.PI)
+  ctx.strokeStyle = '#0284c7'
+  ctx.lineWidth = 0.8
+  ctx.stroke()
+
+  // Écailles (2 arcs)
+  ctx.strokeStyle = '#0ea5e9'
+  ctx.lineWidth = 0.6
+  ctx.beginPath()
+  ctx.arc(CELL * 0.05, 0, CELL * 0.12, -Math.PI * 0.6, Math.PI * 0.6)
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.arc(-CELL * 0.08, 0, CELL * 0.12, -Math.PI * 0.6, Math.PI * 0.6)
+  ctx.stroke()
+
+  ctx.restore()
+}
 
   // ── Rendu complet du canvas ───────────────────────────────────────────────────
   function draw() {

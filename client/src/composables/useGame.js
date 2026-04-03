@@ -1,6 +1,6 @@
 import { ref, onUnmounted } from 'vue'
 
-// ── Constantes ────────────────────────────────────────────────────────────────
+// Constantes
 const CELL       = 20       // taille d'une cellule en px
 const SPEEDS     = [150, 120, 90, 65, 45] // ms par tick selon niveau
 const DIRECTIONS = {
@@ -11,13 +11,13 @@ const DIRECTIONS = {
 }
 
 export function useGame(canvasRef, avatarColor = 240) {
-  // ── État réactif ─────────────────────────────────────────────────────────────
+  // État réactif
   const score     = ref(0)
   const bestScore = ref(Number(localStorage.getItem('poulpentin_best') ?? 0))
   const state     = ref('idle')   // idle | playing | dead
   const level     = ref(1)        // 1-5
 
-  // ── État interne (non réactif, perf) ─────────────────────────────────────────
+  // État interne (non réactif, perf)
   let snake    = []        // tableau de {x, y}
   let fruit    = null      // {x, y}
   let dir      = { x: 1, y: 0 }
@@ -28,7 +28,7 @@ export function useGame(canvasRef, avatarColor = 240) {
   let startTime = 0
   let ctx      = null
 
-  // ── Dessin du poulpe ──────────────────────────────────────────────────────────
+  // Dessin du poulpe
   // Transposition de cree_forme_poulpy() depuis Python/Turtle vers Canvas 2D
   function drawPoulpe(cx, cy, size, angle, color, isHead) {
     ctx.save()
@@ -93,7 +93,7 @@ export function useGame(canvasRef, avatarColor = 240) {
     ctx.restore()
   }
 
-  // ── Dessin du fruit (étoile de mer) ──────────────────────────────────────────
+  // Dessin du fruit (étoile de mer) 
   function drawFruit(fx, fy) {
   const cx = fx * CELL + CELL / 2
   const cy = fy * CELL + CELL / 2
@@ -172,7 +172,7 @@ export function useGame(canvasRef, avatarColor = 240) {
   ctx.restore()
 }
 
-  // ── Rendu complet du canvas ───────────────────────────────────────────────────
+  // Rendu complet du canvas
   function draw() {
     const canvas = canvasRef.value
     if (!canvas) return
@@ -224,7 +224,7 @@ export function useGame(canvasRef, avatarColor = 240) {
     })
   }
 
-  // ── Logique de jeu ────────────────────────────────────────────────────────────
+  // Logique de jeu
   function placeFruit() {
     const occupied = new Set(snake.map(s => `${s.x},${s.y}`))
     let fx, fy
@@ -303,7 +303,7 @@ export function useGame(canvasRef, avatarColor = 240) {
   function stopLoop()    { if (loop) { clearInterval(loop); loop = null } }
   function restartLoop() { stopLoop(); loop = setInterval(tick, SPEEDS[level.value - 1]) }
 
-  // ── API publique ──────────────────────────────────────────────────────────────
+  // API publique
   function init(canvas) {
     ctx  = canvas.getContext('2d')
     cols = Math.floor(canvas.width  / CELL)

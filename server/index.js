@@ -5,6 +5,7 @@ import cors from 'cors'
 import scoresRouter  from './routes/scores.js'
 import usersRouter   from './routes/users.js'
 import avatarsRouter from './routes/avatars.js'
+import aiRouter from './routes/ai.js'
 
 const app  = express()
 const PORT = process.env.PORT || 3000
@@ -17,6 +18,7 @@ app.use(express.json())
 app.use('/scores',  scoresRouter)
 app.use('/users',   usersRouter)
 app.use('/avatars', avatarsRouter)
+app.use('/ai', aiRouter)  
 
 // Health check
 app.get('/health', (_, res) => res.json({ status: 'ok' }))

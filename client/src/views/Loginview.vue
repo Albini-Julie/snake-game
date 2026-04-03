@@ -43,6 +43,11 @@
             :required="true"
             autocomplete="username"
           />
+
+          <AiUsernameSuggestions
+            v-if="mode === 'register'"
+            @select="username = $event"
+          />
           <AppInput
             v-model="email"
             label="Email"
@@ -93,6 +98,8 @@ import { useAuthStore } from "@/stores/auth";
 import AppCard from "@/components/ui/AppCard.vue";
 import AppButton from "@/components/ui/AppButton.vue";
 import AppInput from "@/components/ui/AppInput.vue";
+
+import AiUsernameSuggestions from "@/components/ui/AiUsernameSuggestions.vue";
 
 const auth = useAuthStore();
 const router = useRouter();

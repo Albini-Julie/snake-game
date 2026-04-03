@@ -1,8 +1,8 @@
 import { ref, onUnmounted } from 'vue'
+import axios from 'axios'
 
-// Constantes
-const CELL       = 20       // taille d'une cellule en px
-const SPEEDS     = [150, 120, 90, 65, 45] // ms par tick selon niveau
+const CELL       = 20
+const SPEEDS     = [150, 120, 90, 65, 45]
 const DIRECTIONS = {
   ArrowUp:    { x: 0,  y: -1 },
   ArrowDown:  { x: 0,  y:  1 },
@@ -10,37 +10,50 @@ const DIRECTIONS = {
   ArrowRight: { x: 1,  y:  0 },
 }
 
+const DIR_MAP = {
+  UP:    { x: 0,  y: -1 },
+  DOWN:  { x: 0,  y:  1 },
+  LEFT:  { x: -1, y:  0 },
+  RIGHT: { x: 1,  y:  0 },
+}
+
+const DIR_NAME = {
+  '0,-1': 'UP',
+  '0,1':  'DOWN',
+  '-1,0': 'LEFT',
+  '1,0':  'RIGHT',
+}
+
 export function useGame(canvasRef, avatarColor = 240) {
-  // État réactif
   const score     = ref(0)
   const bestScore = ref(Number(localStorage.getItem('poulpentin_best') ?? 0))
-  const state     = ref('idle')   // idle | playing | dead
-  const level     = ref(1)        // 1-5
+  const state     = ref('idle')
+  const level     = ref(1)
+  const isDemo    = ref(false)
 
-  // État interne (non réactif, perf)
-  let snake    = []        // tableau de {x, y}
-  let fruit    = null      // {x, y}
-  let dir      = { x: 1, y: 0 }
-  let nextDir  = { x: 1, y: 0 }
-  let loop     = null
-  let cols     = 0
-  let rows     = 0
+  let snake     = []
+  let fruit     = null
+  let dir       = { x: 1, y: 0 }
+  let nextDir   = { x: 1, y: 0 }
+  let loop      = null
+  let cols      = 0
+  let rows      = 0
   let startTime = 0
-  let ctx      = null
+  let ctx       = null
+  let stepCount = 0        // nb de cases parcourues depuis le dernier appel IA
+  let pendingDir = null    // direction suggérée par l'IA en attente
 
-  // Dessin du poulpe
-  // Transposition de cree_forme_poulpy() depuis Python/Turtle vers Canvas 2D
+  // ── Dessin du poulpe ─────────────────────────────────────────────────────────
   function drawPoulpe(cx, cy, size, angle, color, isHead) {
     ctx.save()
     ctx.translate(cx, cy)
     ctx.rotate(angle)
 
-    const r         = size * 0.38   // rayon du corps
-    const tentLen   = size * 0.45   // longueur d'une tentacule
-    const tentR     = size * 0.09   // rayon de courbure tentacule
-    const nTent     = 4             // nb tentacules de chaque côté
+    const r       = size * 0.38
+    const tentLen = size * 0.45
+    const tentR   = size * 0.09
+    const nTent   = 4
 
-    // Corps (demi-cercle vers le haut)
     ctx.beginPath()
     ctx.arc(0, 0, r, Math.PI, 0)
     ctx.fillStyle = color
@@ -49,17 +62,14 @@ export function useGame(canvasRef, avatarColor = 240) {
     ctx.lineWidth = 1
     ctx.stroke()
 
-    // Rectangle sous le corps pour relier aux tentacules
     ctx.fillStyle = color
     ctx.fillRect(-r, 0, r * 2, tentR * 2)
 
-    // Tentacules
     const totalWidth = nTent * tentR * 2
     const startX     = -totalWidth / 2 + tentR
     for (let i = 0; i < nTent; i++) {
       const tx = startX + i * tentR * 2
       ctx.beginPath()
-      // Arc du haut (courbure vers l'extérieur)
       ctx.arc(tx, tentR * 2, tentR, Math.PI, 0)
       ctx.arc(tx, tentR * 2 + tentLen, tentR, 0, Math.PI)
       ctx.closePath()
@@ -70,19 +80,15 @@ export function useGame(canvasRef, avatarColor = 240) {
       ctx.stroke()
     }
 
-    // Yeux (seulement sur la tête)
     if (isHead) {
       const eyeOffset = r * 0.38
       const eyeR      = r * 0.18
       const pupilR    = eyeR * 0.55
-
       ;[-1, 1].forEach(side => {
-        // Blanc de l'oeil
         ctx.beginPath()
         ctx.arc(side * eyeOffset, -r * 0.3, eyeR, 0, Math.PI * 2)
         ctx.fillStyle = 'white'
         ctx.fill()
-        // Pupille
         ctx.beginPath()
         ctx.arc(side * eyeOffset + side * pupilR * 0.3, -r * 0.3, pupilR, 0, Math.PI * 2)
         ctx.fillStyle = '#1e1b4b'
@@ -93,97 +99,87 @@ export function useGame(canvasRef, avatarColor = 240) {
     ctx.restore()
   }
 
-  // Dessin du fruit (étoile de mer) 
+  // ── Dessin du fruit (poisson) ─────────────────────────────────────────────────
   function drawFruit(fx, fy) {
-  const cx = fx * CELL + CELL / 2
-  const cy = fy * CELL + CELL / 2
+    const cx = fx * CELL + CELL / 2
+    const cy = fy * CELL + CELL / 2
 
-  ctx.save()
-  ctx.translate(cx, cy)
+    ctx.save()
+    ctx.translate(cx, cy)
 
-  // Queue (triangle)
-  ctx.beginPath()
-  ctx.moveTo(-CELL * 0.28, 0)
-  ctx.lineTo(-CELL * 0.48, -CELL * 0.22)
-  ctx.lineTo(-CELL * 0.48,  CELL * 0.22)
-  ctx.closePath()
-  ctx.fillStyle = '#38bdf8'
-  ctx.fill()
-  ctx.strokeStyle = '#0284c7'
-  ctx.lineWidth = 0.8
-  ctx.stroke()
+    ctx.beginPath()
+    ctx.moveTo(-CELL * 0.28, 0)
+    ctx.lineTo(-CELL * 0.48, -CELL * 0.22)
+    ctx.lineTo(-CELL * 0.48,  CELL * 0.22)
+    ctx.closePath()
+    ctx.fillStyle = '#38bdf8'
+    ctx.fill()
+    ctx.strokeStyle = '#0284c7'
+    ctx.lineWidth = 0.8
+    ctx.stroke()
 
-  // Corps (ellipse)
-  ctx.beginPath()
-  ctx.ellipse(CELL * 0.05, 0, CELL * 0.32, CELL * 0.18, 0, 0, Math.PI * 2)
-  ctx.fillStyle = '#38bdf8'
-  ctx.fill()
-  ctx.strokeStyle = '#0284c7'
-  ctx.lineWidth = 0.8
-  ctx.stroke()
+    ctx.beginPath()
+    ctx.ellipse(CELL * 0.05, 0, CELL * 0.32, CELL * 0.18, 0, 0, Math.PI * 2)
+    ctx.fillStyle = '#38bdf8'
+    ctx.fill()
+    ctx.strokeStyle = '#0284c7'
+    ctx.lineWidth = 0.8
+    ctx.stroke()
 
-  // Ventre (ellipse plus claire)
-  ctx.beginPath()
-  ctx.ellipse(CELL * 0.05, CELL * 0.05, CELL * 0.2, CELL * 0.1, 0, 0, Math.PI * 2)
-  ctx.fillStyle = '#bae6fd'
-  ctx.fill()
+    ctx.beginPath()
+    ctx.ellipse(CELL * 0.05, CELL * 0.05, CELL * 0.2, CELL * 0.1, 0, 0, Math.PI * 2)
+    ctx.fillStyle = '#bae6fd'
+    ctx.fill()
 
-  // Nageoire dorsale
-  ctx.beginPath()
-  ctx.moveTo(-CELL * 0.05, -CELL * 0.18)
-  ctx.lineTo( CELL * 0.05, -CELL * 0.32)
-  ctx.lineTo( CELL * 0.2,  -CELL * 0.18)
-  ctx.closePath()
-  ctx.fillStyle = '#0ea5e9'
-  ctx.fill()
+    ctx.beginPath()
+    ctx.moveTo(-CELL * 0.05, -CELL * 0.18)
+    ctx.lineTo( CELL * 0.05, -CELL * 0.32)
+    ctx.lineTo( CELL * 0.2,  -CELL * 0.18)
+    ctx.closePath()
+    ctx.fillStyle = '#0ea5e9'
+    ctx.fill()
 
-  // Oeil
-  ctx.beginPath()
-  ctx.arc(CELL * 0.22, -CELL * 0.04, CELL * 0.07, 0, Math.PI * 2)
-  ctx.fillStyle = 'white'
-  ctx.fill()
-  ctx.beginPath()
-  ctx.arc(CELL * 0.24, -CELL * 0.04, CELL * 0.04, 0, Math.PI * 2)
-  ctx.fillStyle = '#1e1b4b'
-  ctx.fill()
-  // Reflet
-  ctx.beginPath()
-  ctx.arc(CELL * 0.26, -CELL * 0.06, CELL * 0.015, 0, Math.PI * 2)
-  ctx.fillStyle = 'white'
-  ctx.fill()
+    ctx.beginPath()
+    ctx.arc(CELL * 0.22, -CELL * 0.04, CELL * 0.07, 0, Math.PI * 2)
+    ctx.fillStyle = 'white'
+    ctx.fill()
+    ctx.beginPath()
+    ctx.arc(CELL * 0.24, -CELL * 0.04, CELL * 0.04, 0, Math.PI * 2)
+    ctx.fillStyle = '#1e1b4b'
+    ctx.fill()
+    ctx.beginPath()
+    ctx.arc(CELL * 0.26, -CELL * 0.06, CELL * 0.015, 0, Math.PI * 2)
+    ctx.fillStyle = 'white'
+    ctx.fill()
 
-  // Bouche
-  ctx.beginPath()
-  ctx.arc(CELL * 0.34, CELL * 0.04, CELL * 0.05, 0, Math.PI)
-  ctx.strokeStyle = '#0284c7'
-  ctx.lineWidth = 0.8
-  ctx.stroke()
+    ctx.beginPath()
+    ctx.arc(CELL * 0.34, CELL * 0.04, CELL * 0.05, 0, Math.PI)
+    ctx.strokeStyle = '#0284c7'
+    ctx.lineWidth = 0.8
+    ctx.stroke()
 
-  // Écailles (2 arcs)
-  ctx.strokeStyle = '#0ea5e9'
-  ctx.lineWidth = 0.6
-  ctx.beginPath()
-  ctx.arc(CELL * 0.05, 0, CELL * 0.12, -Math.PI * 0.6, Math.PI * 0.6)
-  ctx.stroke()
-  ctx.beginPath()
-  ctx.arc(-CELL * 0.08, 0, CELL * 0.12, -Math.PI * 0.6, Math.PI * 0.6)
-  ctx.stroke()
+    ctx.strokeStyle = '#0ea5e9'
+    ctx.lineWidth = 0.6
+    ctx.beginPath()
+    ctx.arc(CELL * 0.05, 0, CELL * 0.12, -Math.PI * 0.6, Math.PI * 0.6)
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.arc(-CELL * 0.08, 0, CELL * 0.12, -Math.PI * 0.6, Math.PI * 0.6)
+    ctx.stroke()
 
-  ctx.restore()
-}
+    ctx.restore()
+  }
 
-  // Rendu complet du canvas
+  // ── Rendu ─────────────────────────────────────────────────────────────────────
   function draw() {
     const canvas = canvasRef.value
     if (!canvas) return
     const W = canvas.width
     const H = canvas.height
 
-    // Fond
     ctx.fillStyle = '#0f172a'
     ctx.fillRect(0, 0, W, H)
 
-    // Grille légère
     ctx.strokeStyle = 'rgba(255,255,255,0.03)'
     ctx.lineWidth   = 0.5
     for (let x = 0; x <= cols; x++) {
@@ -193,38 +189,62 @@ export function useGame(canvasRef, avatarColor = 240) {
       ctx.beginPath(); ctx.moveTo(0, y * CELL); ctx.lineTo(W, y * CELL); ctx.stroke()
     }
 
-    // Fruit
     if (fruit) drawFruit(fruit.x, fruit.y)
-
-    // Corps du poulpentin
     if (snake.length === 0) return
+
+    // Badge "IA" en mode démo
+    if (isDemo.value) {
+      ctx.fillStyle = '#6366f1'
+      ctx.fillRect(8, 8, 32, 18)
+      ctx.fillStyle = 'white'
+      ctx.font = 'bold 10px sans-serif'
+      ctx.textAlign = 'left'
+      ctx.fillText('IA', 14, 21)
+    }
 
     const hue = typeof avatarColor === 'object' ? avatarColor.value : avatarColor
     snake.forEach((seg, i) => {
-      const isHead  = i === snake.length - 1
-      const cx      = seg.x * CELL + CELL / 2
-      const cy      = seg.y * CELL + CELL / 2
-      const size    = CELL
+      const isHead = i === snake.length - 1
+      const cx     = seg.x * CELL + CELL / 2
+      const cy     = seg.y * CELL + CELL / 2
 
-      // Calcul de l'angle selon la direction du segment
       let angle = 0
       if (i < snake.length - 1) {
         const next = snake[i + 1]
-        const dx   = next.x - seg.x
-        const dy   = next.y - seg.y
-        angle = Math.atan2(dy, dx) - Math.PI / 2
+        angle = Math.atan2(next.y - seg.y, next.x - seg.x) - Math.PI / 2
       } else {
         angle = Math.atan2(dir.y, dir.x) - Math.PI / 2
       }
 
-      // Couleur dégradée du corps (tête plus vive)
       const lightness = isHead ? 65 : 40 + (i / snake.length) * 15
-      const color = `hsl(${hue}, 80%, ${lightness}%)`
-      drawPoulpe(cx, cy, size, angle, color, isHead)
+      const color = hue === null
+        ? `hsl(0, 0%, ${isHead ? 95 : 75 + (i / snake.length) * 10}%)`
+        : `hsl(${hue}, 80%, ${lightness}%)`
+
+      drawPoulpe(cx, cy, CELL, angle, color, isHead)
     })
   }
 
-  // Logique de jeu
+  // ── IA démo : demande la prochaine direction à Mistral ───────────────────────
+  async function askAI() {
+    const currentDirName = DIR_NAME[`${dir.x},${dir.y}`] ?? 'RIGHT'
+    try {
+      const { data } = await axios.post('/api/ai/demo-move', {
+        head:      snake[snake.length - 1],
+        fruit,
+        snake:     snake.slice(-15), // on envoie max 15 segments pour limiter la taille
+        cols,
+        rows,
+        direction: currentDirName
+      })
+      const newDir = DIR_MAP[data.direction]
+      if (newDir) pendingDir = newDir
+    } catch {
+      // En cas d'erreur, on garde la direction actuelle
+    }
+  }
+
+  // ── Logique de jeu ────────────────────────────────────────────────────────────
   function placeFruit() {
     const occupied = new Set(snake.map(s => `${s.x},${s.y}`))
     let fx, fy
@@ -236,34 +256,47 @@ export function useGame(canvasRef, avatarColor = 240) {
   }
 
   function tick() {
+    // En mode démo, applique la direction suggérée par l'IA si disponible
+    if (isDemo.value) {
+      if (pendingDir) {
+        // Vérifie que ce n'est pas un demi-tour
+        if (!(pendingDir.x === -dir.x && pendingDir.y === -dir.y)) {
+          nextDir = pendingDir
+        }
+        pendingDir = null
+      }
+      // Demande une nouvelle direction toutes les 5 cases
+      stepCount++
+      if (stepCount >= 5) {
+        stepCount = 0
+        askAI()
+      }
+    }
+
     dir = { ...nextDir }
     const head    = snake[snake.length - 1]
     const newHead = { x: head.x + dir.x, y: head.y + dir.y }
 
-    // Collision mur
     if (newHead.x < 0 || newHead.x >= cols || newHead.y < 0 || newHead.y >= rows) {
       return die()
     }
-    // Collision corps
     if (snake.some(s => s.x === newHead.x && s.y === newHead.y)) {
       return die()
     }
 
     snake.push(newHead)
 
-    // Mange le fruit
     if (fruit && newHead.x === fruit.x && newHead.y === fruit.y) {
       score.value++
       if (score.value > bestScore.value) {
         bestScore.value = score.value
         localStorage.setItem('poulpentin_best', bestScore.value)
       }
-      // Monte de niveau tous les 5 fruits
       level.value = Math.min(5, 1 + Math.floor(score.value / 5))
       placeFruit()
-      restartLoop()  // relance le loop avec la nouvelle vitesse
+      restartLoop()
     } else {
-      snake.shift()  // enlève la queue seulement si pas de fruit mangé
+      snake.shift()
     }
 
     draw()
@@ -272,12 +305,8 @@ export function useGame(canvasRef, avatarColor = 240) {
   function die() {
     stopLoop()
     state.value = 'dead'
-    // Animation de clignotement
     let blinks = 0
     const blink = setInterval(() => {
-      snake.forEach((_, i) => {
-        // Alterne opacité via globalAlpha sur le draw
-      })
       draw()
       if (++blinks >= 6) {
         clearInterval(blink)
@@ -291,9 +320,9 @@ export function useGame(canvasRef, avatarColor = 240) {
     if (!canvas) return
     ctx.fillStyle = 'rgba(0,0,0,0.6)'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
-    ctx.fillStyle   = '#ef4444'
-    ctx.font        = 'bold 20px "Press Start 2P", monospace'
-    ctx.textAlign   = 'center'
+    ctx.fillStyle = '#ef4444'
+    ctx.font      = 'bold 20px "Press Start 2P", monospace'
+    ctx.textAlign = 'center'
     ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 16)
     ctx.fillStyle = 'white'
     ctx.font      = '12px "Press Start 2P", monospace'
@@ -303,38 +332,45 @@ export function useGame(canvasRef, avatarColor = 240) {
   function stopLoop()    { if (loop) { clearInterval(loop); loop = null } }
   function restartLoop() { stopLoop(); loop = setInterval(tick, SPEEDS[level.value - 1]) }
 
-  // API publique
   function init(canvas) {
     ctx  = canvas.getContext('2d')
     cols = Math.floor(canvas.width  / CELL)
     rows = Math.floor(canvas.height / CELL)
   }
 
-  function start() {
-    score.value = 0
-    level.value = 1
-    dir         = { x: 1, y: 0 }
-    nextDir     = { x: 1, y: 0 }
-    // Serpent initial de 3 segments au centre
-    const midX  = Math.floor(cols / 2)
-    const midY  = Math.floor(rows / 2)
-    snake       = [
+  function start(demo = false) {
+    score.value  = 0
+    level.value  = 1
+    isDemo.value = demo
+    dir          = { x: 1, y: 0 }
+    nextDir      = { x: 1, y: 0 }
+    pendingDir   = null
+    stepCount    = 0
+
+    const midX = Math.floor(cols / 2)
+    const midY = Math.floor(rows / 2)
+    snake = [
       { x: midX - 2, y: midY },
       { x: midX - 1, y: midY },
       { x: midX,     y: midY },
     ]
-    startTime   = Date.now()
+    startTime = Date.now()
     placeFruit()
+
+    // En mode démo, on demande la première direction immédiatement
+    if (demo) askAI()
+
     state.value = 'playing'
     restartLoop()
     draw()
   }
 
   function handleKey(e) {
+    // Les touches sont désactivées en mode démo
+    if (isDemo.value) return
     const newDir = DIRECTIONS[e.key]
     if (!newDir) return
     e.preventDefault()
-    // Interdit le demi-tour
     if (newDir.x === -dir.x && newDir.y === -dir.y) return
     nextDir = newDir
   }
@@ -346,7 +382,7 @@ export function useGame(canvasRef, avatarColor = 240) {
   onUnmounted(stopLoop)
 
   return {
-    score, bestScore, state, level,
+    score, bestScore, state, level, isDemo,
     init, start, handleKey, getDuration
   }
 }

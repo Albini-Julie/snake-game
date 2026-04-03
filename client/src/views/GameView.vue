@@ -27,13 +27,18 @@
         :save-error="saveError"
         :advice="advice"
         :advice-loading="adviceLoading"
+        :was-demo="game.isDemo.value"
         @start="startGame"
+        @demo="startDemo"
         @leaderboard="router.push('/leaderboard')"
       />
     </div>
 
-    <!-- Contrôles mobile -->
-    <div class="grid grid-cols-3 gap-2 mt-2 sm:hidden">
+    <!-- Contrôles mobile (masqués en mode démo) -->
+    <div
+      v-if="!game.isDemo.value"
+      class="grid grid-cols-3 gap-2 mt-2 sm:hidden"
+    >
       <div />
       <AppButton
         variant="secondary"
@@ -61,6 +66,14 @@
         >→</AppButton
       >
     </div>
+
+    <!-- Info mode démo -->
+    <p
+      v-if="game.isDemo.value && game.state.value === 'playing'"
+      class="text-slate-500 text-xs"
+    >
+      L'IA contrôle le poulpe — appuie sur une flèche pour reprendre la main
+    </p>
   </div>
 </template>
 
@@ -116,13 +129,23 @@ async function startGame() {
   saveError.value = "";
   advice.value = "";
   adviceLoading.value = false;
-  game.start();
+  game.start(false);
+}
+
+async function startDemo() {
+  saved.value = false;
+  saveError.value = "";
+  advice.value = "";
+  adviceLoading.value = false;
+  game.start(true);
 }
 
 watch(game.state, async (val) => {
   if (val !== "dead" || game.score.value === 0) return;
 
-  // Sauvegarde du score et conseil IA en parallèle
+  // En mode démo, pas de sauvegarde du score
+  if (game.isDemo.value) return;
+
   saving.value = true;
   adviceLoading.value = true;
   saveError.value = "";
@@ -139,7 +162,6 @@ watch(game.state, async (val) => {
     }),
   ]);
 
-  // Score
   if (scoreResult.status === "fulfilled") {
     saved.value = true;
   } else {
@@ -147,7 +169,6 @@ watch(game.state, async (val) => {
   }
   saving.value = false;
 
-  // Conseil IA
   if (adviceResult.status === "fulfilled") {
     advice.value = adviceResult.value.data.advice;
   }

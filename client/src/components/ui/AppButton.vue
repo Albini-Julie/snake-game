@@ -3,7 +3,7 @@
     :type="type"
     :disabled="disabled"
     :class="[
-      'px-6 py-3 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed',
+      'px-6 py-3 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed text-[13px]',
       variants[variant],
     ]"
   >

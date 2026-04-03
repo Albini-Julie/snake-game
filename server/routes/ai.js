@@ -2,29 +2,34 @@ import { Router } from 'express'
 
 const router = Router()
 
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`
+const MISTRAL_URL = 'https://api.mistral.ai/v1/chat/completions'
 
 // ── Cache pour les usernames ──────────────────────────────────────────────────
 let usernamesCache = { data: null, timestamp: 0 }
 const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
-async function callGemini(prompt) {
-  const response = await fetch(`${GEMINI_URL}?key=${process.env.GEMINI_API_KEY}`, {
+async function callMistral(prompt, maxTokens = 300) {
+  const response = await fetch(MISTRAL_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization': `Bearer ${process.env.MISTRAL_API_KEY}`
+    },
     body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { maxOutputTokens: 500, temperature: 0.9 },
+      model:       'mistral-small-latest',
+      max_tokens:  maxTokens,
+      temperature: 0.9,
+      messages: [{ role: 'user', content: prompt }]
     })
   })
 
   const data = await response.json()
 
   if (!response.ok) {
-    throw new Error(data.error?.message ?? 'Erreur Gemini')
+    throw new Error(data.message ?? 'Erreur Mistral')
   }
 
-  return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? ''
+  return data.choices?.[0]?.message?.content?.trim() ?? ''
 }
 
 /**
@@ -39,7 +44,7 @@ router.get('/usernames', async (req, res) => {
   }
 
   try {
-    const text = await callGemini(
+    const text = await callMistral(
   `Génère exactement 3 pseudos courts pour un jeu de poulpe marin.
 Règles strictes : sans espace, max 12 caractères chacun, séparés par des virgules, rien d'autre.
 Format exact : Pseudo1,Pseudo2,Pseudo3`
@@ -80,7 +85,7 @@ router.post('/advice', async (req, res) => {
   const durationSec = Math.round(duration / 1000)
 
   try {
-    const advice = await callGemini(
+    const advice = await callMistral(
   `Tu es un coach de jeu snake. Un joueur vient de terminer une partie :
 - Score : ${score} poissons mangés
 - Durée : ${durationSec} secondes
@@ -104,7 +109,14 @@ Règles strictes :
       return res.status(500).json({ error: 'Impossible de générer un conseil' })
     }
 
-    res.json({ advice })
+    const cleanAdvice = advice
+    .replace(/\*\*/g, '')
+    .replace(/\*/g, '')
+    .replace(/\_\_/g, '')
+    .replace(/\_/g, '')
+    .trim()
+
+    res.json({ advice: cleanAdvice })
   } catch (err) {
     console.error('Erreur IA advice:', err)
     res.status(500).json({ error: 'Erreur lors de la génération du conseil' })

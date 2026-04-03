@@ -8,7 +8,12 @@
     <p class="text-slate-400 text-sm">
       Utilise les flèches pour diriger le poulpe
     </p>
-    <AppButton @click="$emit('start')">Démarrer</AppButton>
+    <div class="flex gap-3">
+      <AppButton @click="$emit('start')">Démarrer</AppButton>
+      <AppButton variant="secondary" @click="$emit('demo')">
+        Démo IA
+      </AppButton>
+    </div>
   </div>
 
   <!-- Écran Game Over -->
@@ -17,19 +22,19 @@
     class="absolute inset-0 flex flex-col items-center justify-center bg-game-bg/80 gap-4 px-6"
   >
     <p class="font-game text-red-400 text-lg">GAME OVER</p>
-    <p class="text-slate-300 text-sm">Score : {{ score }}</p>
+    <p class="text-slate-300 text-sm">
+      Score : {{ score }}
+      <span v-if="wasDemo" class="text-slate-500 ml-2">(démo IA)</span>
+    </p>
 
     <!-- Conseil IA -->
     <div
       class="w-full max-w-xs text-center min-h-[48px] flex items-center justify-center"
     >
-      <p v-if="adviceLoading" class="text-slate-500 text-lg italic">
+      <p v-if="adviceLoading" class="text-slate-500 italic">
         Le coach marin réfléchit...
       </p>
-      <p
-        v-else-if="advice"
-        class="text-slate-300 text-lg italic leading-relaxed"
-      >
+      <p v-else-if="advice" class="text-slate-300 italic leading-relaxed">
         "{{ advice }}"
       </p>
     </div>
@@ -40,6 +45,7 @@
 
     <div class="flex gap-3 mt-2">
       <AppButton @click="$emit('start')">Rejouer</AppButton>
+      <AppButton variant="secondary" @click="$emit('demo')">Démo IA</AppButton>
       <AppButton variant="secondary" @click="$emit('leaderboard')"
         >Classement</AppButton
       >
@@ -58,7 +64,8 @@ defineProps({
   saveError: { type: String, default: "" },
   advice: { type: String, default: "" },
   adviceLoading: { type: Boolean, default: false },
+  wasDemo: { type: Boolean, default: false },
 });
 
-defineEmits(["start", "leaderboard"]);
+defineEmits(["start", "demo", "leaderboard"]);
 </script>

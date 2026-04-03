@@ -6,8 +6,7 @@
         <p class="text-slate-400 text-sm">Le snake aux tentacules</p>
       </div>
 
-      <div class="bg-game-surface border border-game-border rounded-xl p-6">
-        <!-- Onglets -->
+      <AppCard>
         <div class="flex mb-6 bg-game-bg rounded-lg p-1">
           <button
             @click="mode = 'login'"
@@ -34,47 +33,33 @@
         </div>
 
         <form @submit.prevent="handleSubmit" class="flex flex-col gap-4">
-          <div v-if="mode === 'register'">
-            <label class="block text-sm text-slate-400 mb-1"
-              >Nom d'utilisateur</label
-            >
-            <input
-              v-model="username"
-              type="text"
-              class="w-full px-4 py-3 rounded-lg bg-game-bg border border-game-border text-white placeholder-slate-500 focus:outline-none focus:border-game-accent transition-colors"
-              placeholder="ex : poulpe42"
-              minlength="3"
-              maxlength="20"
-              required
-            />
-          </div>
-
-          <div>
-            <label class="block text-sm text-slate-400 mb-1">Email</label>
-            <input
-              v-model="email"
-              type="email"
-              autocomplete="email"
-              class="w-full px-4 py-3 rounded-lg bg-game-bg border border-game-border text-white placeholder-slate-500 focus:outline-none focus:border-game-accent transition-colors"
-              placeholder="ton@email.com"
-              required
-            />
-          </div>
-
-          <div>
-            <label class="block text-sm text-slate-400 mb-1"
-              >Mot de passe</label
-            >
-            <input
-              v-model="password"
-              type="password"
-              autocomplete="current-password"
-              class="w-full px-4 py-3 rounded-lg bg-game-bg border border-game-border text-white placeholder-slate-500 focus:outline-none focus:border-game-accent transition-colors"
-              placeholder="••••••••"
-              minlength="6"
-              required
-            />
-          </div>
+          <AppInput
+            v-if="mode === 'register'"
+            v-model="username"
+            label="Nom d'utilisateur"
+            placeholder="ex : poulpe42"
+            :minlength="3"
+            :maxlength="20"
+            :required="true"
+            autocomplete="username"
+          />
+          <AppInput
+            v-model="email"
+            label="Email"
+            type="email"
+            placeholder="ton@email.com"
+            :required="true"
+            autocomplete="email"
+          />
+          <AppInput
+            v-model="password"
+            label="Mot de passe"
+            type="password"
+            placeholder="••••••••"
+            :minlength="6"
+            :required="true"
+            autocomplete="current-password"
+          />
 
           <p
             v-if="error"
@@ -82,7 +67,6 @@
           >
             {{ error }}
           </p>
-
           <p
             v-if="successMsg"
             class="text-green-400 text-sm bg-green-400/10 rounded-lg px-4 py-3"
@@ -90,18 +74,14 @@
             {{ successMsg }}
           </p>
 
-          <button
-            type="submit"
-            class="mt-2 px-6 py-3 rounded-lg font-semibold bg-game-accent hover:bg-indigo-500 text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            :disabled="loading"
-          >
+          <AppButton type="submit" class="mt-2" :disabled="loading">
             <span v-if="loading">Chargement...</span>
             <span v-else>{{
               mode === "login" ? "Se connecter" : "S'inscrire"
             }}</span>
-          </button>
+          </AppButton>
         </form>
-      </div>
+      </AppCard>
     </div>
   </div>
 </template>
@@ -110,6 +90,9 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
+import AppCard from "@/components/ui/AppCard.vue";
+import AppButton from "@/components/ui/AppButton.vue";
+import AppInput from "@/components/ui/AppInput.vue";
 
 const auth = useAuthStore();
 const router = useRouter();

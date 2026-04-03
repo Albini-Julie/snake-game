@@ -11,34 +11,17 @@
       <div v-if="loading" class="text-center text-slate-400 py-20">
         Chargement des avatars...
       </div>
-
       <div v-else-if="error" class="text-red-400 text-center py-10">
         {{ error }}
       </div>
 
       <div v-else>
-        <div class="grid grid-cols-3 sm:grid-cols-4 gap-4 mb-8">
-          <button
-            v-for="avatar in avatars"
-            :key="avatar.id"
-            @click="selected = avatar.id"
-            :class="
-              selected === avatar.id
-                ? 'border-game-accent ring-2 ring-game-accent ring-offset-2 ring-offset-game-bg'
-                : 'border-game-border hover:border-game-accent'
-            "
-            class="bg-game-surface border rounded-xl p-4 flex flex-col items-center gap-3 transition-all duration-200"
-          >
-            <img
-              :src="avatar.path"
-              :alt="avatar.name"
-              class="w-16 h-16 object-contain"
-            />
-            <span class="text-xs text-slate-300 text-center leading-tight">{{
-              avatar.name
-            }}</span>
-          </button>
-        </div>
+        <AvatarGrid
+          :avatars="avatars"
+          :selected="selected"
+          @select="selected = $event"
+          class="mb-8"
+        />
 
         <p
           v-if="auth.profile?.avatars"
@@ -56,21 +39,17 @@
         </p>
 
         <div class="flex gap-3 justify-center">
-          <button
-            @click="handleSave"
-            class="px-6 py-3 rounded-lg font-semibold bg-game-accent hover:bg-indigo-500 text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            :disabled="!selected || saving"
-          >
+          <AppButton @click="handleSave" :disabled="!selected || saving">
             <span v-if="saving">Sauvegarde...</span>
             <span v-else>Confirmer</span>
-          </button>
-          <button
+          </AppButton>
+          <AppButton
             v-if="auth.hasAvatar"
+            variant="secondary"
             @click="router.push('/game')"
-            class="px-6 py-3 rounded-lg font-semibold bg-game-surface hover:bg-game-border text-white border border-game-border transition-all"
           >
             Annuler
-          </button>
+          </AppButton>
         </div>
       </div>
     </div>
@@ -82,6 +61,8 @@ import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import api from "@/lib/api";
+import AppButton from "@/components/ui/AppButton.vue";
+import AvatarGrid from "@/components/avatar/AvatarGrid.vue";
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -95,6 +76,7 @@ const saveError = ref("");
 const saveSuccess = ref(false);
 
 onMounted(async () => {
+  if (avatars.value.length > 0) return;
   try {
     const { data } = await api.get("/avatars");
     avatars.value = data;

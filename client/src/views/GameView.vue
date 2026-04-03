@@ -2,25 +2,12 @@
   <div
     class="min-h-screen flex flex-col items-center justify-center gap-6 px-4 py-8"
   >
-    <!-- HUD -->
-    <div class="flex items-center gap-8">
-      <div class="text-center">
-        <p class="text-slate-500 text-xs mb-1">SCORE</p>
-        <p class="font-game text-white text-2xl">{{ game.score.value }}</p>
-      </div>
-      <div class="text-center">
-        <p class="text-slate-500 text-xs mb-1">MEILLEUR</p>
-        <p class="font-game text-game-accent text-2xl">
-          {{ game.bestScore.value }}
-        </p>
-      </div>
-      <div class="text-center">
-        <p class="text-slate-500 text-xs mb-1">NIVEAU</p>
-        <p class="font-game text-white text-2xl">{{ game.level.value }}</p>
-      </div>
-    </div>
+    <GameHud
+      :score="game.score.value"
+      :best-score="game.bestScore.value"
+      :level="game.level.value"
+    />
 
-    <!-- Canvas -->
     <div
       class="relative border-2 border-game-border rounded-xl overflow-hidden"
       :style="{ width: CANVAS_W + 'px', height: CANVAS_H + 'px' }"
@@ -32,94 +19,62 @@
         class="block"
       />
 
-      <!-- Écran d'accueil -->
-      <div
-        v-if="game.state.value === 'idle'"
-        class="absolute inset-0 flex flex-col items-center justify-center bg-game-bg/90 gap-6"
-      >
-        <p class="font-game text-game-accent text-lg">POULPENTIN</p>
-        <p class="text-slate-400 text-sm">
-          Utilise les flèches pour diriger le poulpe
-        </p>
-        <button
-          @click="startGame"
-          class="px-6 py-3 rounded-lg font-semibold bg-game-accent hover:bg-indigo-500 text-white transition-all text-sm"
-        >
-          Démarrer
-        </button>
-      </div>
-
-      <!-- Écran Game Over -->
-      <div
-        v-if="game.state.value === 'dead'"
-        class="absolute inset-0 flex flex-col items-center justify-center bg-game-bg/80 gap-5"
-      >
-        <p class="font-game text-red-400 text-lg">GAME OVER</p>
-        <p class="text-slate-300 text-sm">Score : {{ game.score.value }}</p>
-
-        <p v-if="saving" class="text-slate-400 text-xs">
-          Sauvegarde du score...
-        </p>
-        <p v-if="saveError" class="text-red-400 text-xs">{{ saveError }}</p>
-        <p v-if="saved" class="text-green-400 text-xs">Score sauvegardé !</p>
-
-        <div class="flex gap-3 mt-2">
-          <button
-            @click="startGame"
-            class="px-6 py-3 rounded-lg font-semibold bg-game-accent hover:bg-indigo-500 text-white transition-all text-sm"
-          >
-            Rejouer
-          </button>
-          <RouterLink
-            to="/leaderboard"
-            class="px-6 py-3 rounded-lg font-semibold bg-game-surface hover:bg-game-border text-white border border-game-border transition-all text-sm"
-          >
-            Classement
-          </RouterLink>
-        </div>
-      </div>
+      <GameOverlay
+        :state="game.state.value"
+        :score="game.score.value"
+        :saving="saving"
+        :saved="saved"
+        :save-error="saveError"
+        @start="startGame"
+        @leaderboard="router.push('/leaderboard')"
+      />
     </div>
 
     <!-- Contrôles mobile -->
     <div class="grid grid-cols-3 gap-2 mt-2 sm:hidden">
       <div />
-      <button
+      <AppButton
+        variant="secondary"
         @click="emitKey('ArrowUp')"
-        class="px-4 py-4 rounded-lg bg-game-surface hover:bg-game-border text-white border border-game-border transition-all text-lg"
+        class="py-4 text-lg"
+        >↑</AppButton
       >
-        ↑
-      </button>
       <div />
-      <button
+      <AppButton
+        variant="secondary"
         @click="emitKey('ArrowLeft')"
-        class="px-4 py-4 rounded-lg bg-game-surface hover:bg-game-border text-white border border-game-border transition-all text-lg"
+        class="py-4 text-lg"
+        >←</AppButton
       >
-        ←
-      </button>
-      <button
+      <AppButton
+        variant="secondary"
         @click="emitKey('ArrowDown')"
-        class="px-4 py-4 rounded-lg bg-game-surface hover:bg-game-border text-white border border-game-border transition-all text-lg"
+        class="py-4 text-lg"
+        >↓</AppButton
       >
-        ↓
-      </button>
-      <button
+      <AppButton
+        variant="secondary"
         @click="emitKey('ArrowRight')"
-        class="px-4 py-4 rounded-lg bg-game-surface hover:bg-game-border text-white border border-game-border transition-all text-lg"
+        class="py-4 text-lg"
+        >→</AppButton
       >
-        →
-      </button>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, watch, onMounted, onUnmounted } from "vue";
+import { useRouter } from "vue-router";
 import { useGame } from "@/composables/useGame";
 import api from "@/lib/api";
+import AppButton from "@/components/ui/AppButton.vue";
+import GameHud from "@/components/game/GameHud.vue";
+import GameOverlay from "@/components/game/GameOverlay.vue";
 
 const CANVAS_W = 400;
 const CANVAS_H = 400;
 
+const router = useRouter();
 const canvasRef = ref(null);
 const game = useGame(canvasRef);
 

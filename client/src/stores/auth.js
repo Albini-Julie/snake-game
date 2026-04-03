@@ -19,29 +19,37 @@ export const useAuthStore = defineStore('auth', () => {
 
       const { data } = await api.get('/users/me')
       profile.value = data
-    } catch {
+    } catch (e) {
       profile.value = null
     }
   }
 
   // Initialise la session au démarrage de l'app
   async function init() {
-    loading.value = true
+  loading.value = true
 
-    // Attend que Supabase ait restauré la session depuis le localStorage
-    const { data } = await supabase.auth.getSession()
-    user.value = data.session?.user ?? null
+  const { data } = await supabase.auth.getSession()
+  user.value = data.session?.user ?? null
+  if (user.value) await fetchProfile()
+  loading.value = false
 
-    if (user.value) await fetchProfile()
-    loading.value = false
+  supabase.auth.onAuthStateChange(async (event, session) => {
 
-    // Écoute les changements APRÈS l'init
-    supabase.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN') {
       user.value = session?.user ?? null
-      if (event === 'SIGNED_IN')  await fetchProfile()
-      if (event === 'SIGNED_OUT') profile.value = null
-    })
-  }
+      if (!profile.value) await fetchProfile()
+    }
+
+    if (event === 'SIGNED_OUT') {
+      user.value    = null
+      profile.value = null
+    }
+
+    if (event === 'TOKEN_REFRESHED') {
+      user.value = session?.user ?? null
+    }
+  })
+}
 
   async function login(email, password) {
     const { error } = await supabase.auth.signInWithPassword({ email, password })

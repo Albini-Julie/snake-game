@@ -10,7 +10,7 @@ const DIRECTIONS = {
   ArrowRight: { x: 1,  y:  0 },
 }
 
-export function useGame(canvasRef) {
+export function useGame(canvasRef, avatarColor = 240) {
   // ── État réactif ─────────────────────────────────────────────────────────────
   const score     = ref(0)
   const bestScore = ref(Number(localStorage.getItem('poulpentin_best') ?? 0))
@@ -199,7 +199,7 @@ export function useGame(canvasRef) {
     // Corps du poulpentin
     if (snake.length === 0) return
 
-    const hue = 240  // teinte indigo, peut devenir dynamique plus tard
+    const hue = typeof avatarColor === 'object' ? avatarColor.value : avatarColor
     snake.forEach((seg, i) => {
       const isHead  = i === snake.length - 1
       const cx      = seg.x * CELL + CELL / 2

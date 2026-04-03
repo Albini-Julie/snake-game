@@ -63,9 +63,10 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted } from "vue";
+import { ref, watch, onMounted, onUnmounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useGame } from "@/composables/useGame";
+import { useAuthStore } from "@/stores/auth";
 import api from "@/lib/api";
 import AppButton from "@/components/ui/AppButton.vue";
 import GameHud from "@/components/game/GameHud.vue";
@@ -76,11 +77,27 @@ const CANVAS_H = 400;
 
 const router = useRouter();
 const canvasRef = ref(null);
-const game = useGame(canvasRef);
 
 const saving = ref(false);
 const saved = ref(false);
 const saveError = ref("");
+
+const auth = useAuthStore();
+
+const AVATAR_COLORS = {
+  "Poulpe bleu": 210,
+  "Poulpe rouge": 0,
+  "Poulpe vert": 140,
+  "Poulpe doré": 40,
+  "Poulpe violet": 270,
+  "Poulpe noir": 300,
+};
+
+const avatarColor = computed(
+  () => AVATAR_COLORS[auth.profile?.avatars?.name] ?? 240,
+);
+
+const game = useGame(canvasRef, avatarColor);
 
 onMounted(() => {
   game.init(canvasRef.value);

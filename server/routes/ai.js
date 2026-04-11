@@ -34,7 +34,7 @@ async function callMistral(prompt, maxTokens = 300) {
 
 /**
  * GET /ai/usernames
- * Génère 3 pseudos marins via Gemini
+ * Génère 3 pseudos marins via Mistral
  */
 router.get('/usernames', async (req, res) => {
     const forceRefresh = req.query.refresh === 'true'
@@ -62,7 +62,7 @@ Format exact : Pseudo1,Pseudo2,Pseudo3`
     res.json({ usernames })
   } catch (err) {
     console.error('Erreur IA usernames:', err)
-    // Si erreur Gemini, retourne le cache même expiré plutôt que rien
+    // Si erreur Mistral, retourne le cache même expiré plutôt que rien
     if (usernamesCache.data) {
       return res.json({ usernames: usernamesCache.data })
     }

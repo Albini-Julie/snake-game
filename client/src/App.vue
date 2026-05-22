@@ -10,50 +10,8 @@
       />
     </div>
 
-    <nav
-      v-if="auth.isLoggedIn"
-      class="relative z-10 bg-game-surface/80 backdrop-blur border-b border-game-border px-6 py-3 flex items-center justify-between"
-    >
-      <span class="font-game text-game-accent text-sm">POULPENTIN</span>
-      <div class="flex items-center gap-4">
-        <!-- Avatar du joueur -->
-        <div class="flex items-center gap-1 mr-2">
-          <img
-            v-if="auth.profile?.avatars?.path"
-            :src="auth.profile.avatars.path"
-            :alt="auth.profile.username"
-            class="w-8 h-8 object-contain rounded-full border border-game-border"
-          />
-          <p class="text-slate-300 text-sm hidden sm:block">
-            {{ auth.profile?.username }}
-          </p>
-        </div>
-        <RouterLink
-          to="/game"
-          class="text-slate-400 hover:text-white text-sm transition-colors"
-          active-class="text-white font-semibold"
-          >Jouer</RouterLink
-        >
-        <RouterLink
-          to="/leaderboard"
-          class="text-slate-400 hover:text-white text-sm transition-colors"
-          active-class="text-white font-semibold"
-          >Scores</RouterLink
-        >
-        <RouterLink
-          to="/avatar"
-          class="text-slate-400 hover:text-white text-sm transition-colors"
-          active-class="text-white font-semibold"
-          >Avatar</RouterLink
-        >
-        <button
-          @click="handleLogout"
-          class="text-slate-400 hover:text-white text-sm transition-colors"
-        >
-          Déconnexion
-        </button>
-      </div>
-    </nav>
+    <!-- Header -->
+    <AppHeader @logout="handleLogout" />
 
     <main class="flex-1 relative z-10">
       <RouterView />
@@ -64,6 +22,7 @@
 <script setup>
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
+import AppHeader from "@/components/navigation/AppHeader.vue";
 
 const auth = useAuthStore();
 const router = useRouter();

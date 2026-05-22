@@ -302,32 +302,78 @@ export function useGame(canvasRef, avatarColor = 240) {
     draw()
   }
 
-  function die() {
-    stopLoop()
-    state.value = 'dead'
-    let blinks = 0
-    const blink = setInterval(() => {
-      draw()
-      if (++blinks >= 6) {
-        clearInterval(blink)
-        drawDeathScreen()
-      }
-    }, 120)
+  // ── Particules de mort ────────────────────────────────────────────────────────
+let deathParticles = []
+
+function createDeathParticles() {
+  deathParticles = snake.map(seg => ({
+    x:     seg.x * CELL + CELL / 2,
+    y:     seg.y * CELL + CELL / 2,
+    vx:    (Math.random() - 0.5) * 6,  // vitesse aléatoire X
+    vy:    (Math.random() - 0.5) * 6,  // vitesse aléatoire Y
+    alpha: 1,
+    size:  CELL * 0.4,
+    color: `hsl(${typeof avatarColor === 'object' ? avatarColor.value : avatarColor}, 80%, 60%)`
+  }))
+}
+
+function animateDeath() {
+  const canvas = canvasRef.value
+  if (!canvas) return
+
+  // Fond
+  ctx.fillStyle = '#0f172a'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+  // Flash rouge au début
+  ctx.fillStyle = `rgba(239, 68, 68, ${Math.max(0, deathParticles[0]?.alpha - 0.3) * 0.3})`
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+  let allGone = true
+
+  deathParticles.forEach(p => {
+    if (p.alpha <= 0) return
+    allGone = false
+
+    // Met à jour la position
+    p.x     += p.vx
+    p.y     += p.vy
+    p.vy    += 0.2   // gravité légère
+    p.alpha -= 0.03
+    p.size  *= 0.97  // rétrécit
+
+    // Dessine la particule
+    ctx.save()
+    ctx.globalAlpha = Math.max(0, p.alpha)
+    ctx.translate(p.x, p.y)
+    ctx.beginPath()
+    ctx.arc(0, 0, p.size, Math.PI, 0)
+    ctx.fillStyle = p.color
+    ctx.fill()
+    // Tentacules simplifiées
+    for (let i = 0; i < 4; i++) {
+      const tx = -p.size + i * (p.size * 0.6) + p.size * 0.3
+      ctx.beginPath()
+      ctx.ellipse(tx, p.size * 0.5, p.size * 0.15, p.size * 0.4, 0, 0, Math.PI * 2)
+      ctx.fill()
+    }
+    ctx.restore()
+  })
+
+  if (allGone) {
+    state.value = 'dead' 
+    return
   }
 
-  function drawDeathScreen() {
-    const canvas = canvasRef.value
-    if (!canvas) return
-    ctx.fillStyle = 'rgba(0,0,0,0.6)'
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
-    ctx.fillStyle = '#ef4444'
-    ctx.font      = 'bold 20px "Press Start 2P", monospace'
-    ctx.textAlign = 'center'
-    ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 16)
-    ctx.fillStyle = 'white'
-    ctx.font      = '12px "Press Start 2P", monospace'
-    ctx.fillText(`Score : ${score.value}`, canvas.width / 2, canvas.height / 2 + 16)
-  }
+  requestAnimationFrame(animateDeath)
+}
+
+function die() {
+  stopLoop()
+  state.value = 'dying'  
+  createDeathParticles()
+  requestAnimationFrame(animateDeath)
+}
 
   function stopLoop()    { if (loop) { clearInterval(loop); loop = null } }
   function restartLoop() { stopLoop(); loop = setInterval(tick, SPEEDS[level.value - 1]) }

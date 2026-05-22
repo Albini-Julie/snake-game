@@ -16,6 +16,18 @@
     >
       <span class="font-game text-game-accent text-sm">POULPENTIN</span>
       <div class="flex items-center gap-4">
+        <!-- Avatar du joueur -->
+        <div class="flex items-center gap-1 mr-2">
+          <img
+            v-if="auth.profile?.avatars?.path"
+            :src="auth.profile.avatars.path"
+            :alt="auth.profile.username"
+            class="w-8 h-8 object-contain rounded-full border border-game-border"
+          />
+          <p class="text-slate-300 text-sm hidden sm:block">
+            {{ auth.profile?.username }}
+          </p>
+        </div>
         <RouterLink
           to="/game"
           class="text-slate-400 hover:text-white text-sm transition-colors"

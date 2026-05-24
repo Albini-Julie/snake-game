@@ -1,6 +1,6 @@
 <template>
   <nav
-    class="relative z-10 bg-game-surface/80 backdrop-blur border-b border-game-border px-6 py-3 flex items-center justify-between"
+    class="relative z-20 bg-game-surface/80 backdrop-blur border-b border-game-border px-6 py-3 flex items-center justify-between shadow-[0_4px_0_#000000]"
   >
     <!-- Logo -->
     <span class="font-game text-game-accent text-sm">POULPENTIN</span>

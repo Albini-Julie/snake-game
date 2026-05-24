@@ -1,5 +1,12 @@
 <template>
-  <div :class="['bg-game-surface border rounded-xl p-6', borderClass]">
+  <div
+    class="relative bg-game-surface p-6 shadow-pixel-card"
+    :class="borderClass"
+  >
+    <!-- Inner border subtil -->
+    <div
+      class="absolute inset-1 border border-game-accent/10 pointer-events-none"
+    />
     <slot />
   </div>
 </template>
@@ -8,7 +15,7 @@
 defineProps({
   borderClass: {
     type: String,
-    default: "border-game-border",
+    default: "",
   },
 });
 </script>

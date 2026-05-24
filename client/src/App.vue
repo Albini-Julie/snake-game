@@ -9,12 +9,21 @@
         :style="star.style"
       />
     </div>
+    <!-- Scanlines CRT -->
+    <div class="scanlines absolute inset-0 pointer-events-none z-20" />
+
+    <!-- Vignette -->
+    <div class="vignette absolute inset-0 pointer-events-none z-20" />
 
     <!-- Header -->
-    <AppHeader @logout="handleLogout" />
+    <AppHeader v-if="auth.isLoggedIn" @logout="handleLogout" />
 
     <main class="flex-1 relative z-10">
-      <RouterView />
+      <RouterView v-slot="{ Component }">
+        <Transition name="crt" mode="out-in">
+          <component :is="Component" :key="$route.path" />
+        </Transition>
+      </RouterView>
     </main>
   </div>
 </template>
@@ -41,7 +50,7 @@ const stars = Array.from({ length: 80 }, (_, i) => ({
     width: `${Math.random() * 2 + 1}px`,
     height: `${Math.random() * 2 + 1}px`,
     animationDelay: `${Math.random() * 4}s`,
-    animationDuration: `${Math.random() * 3 + 2}s`,
+    "--duration": `${Math.random() * 3 + 2}s`,
     opacity: Math.random() * 0.7 + 0.1,
   },
 }));
@@ -59,6 +68,24 @@ const stars = Array.from({ length: 80 }, (_, i) => ({
   animation: twinkle var(--duration, 3s) ease-in-out infinite alternate;
 }
 
+.scanlines {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+}
+
+.vignette {
+  background: radial-gradient(
+    ellipse at center,
+    transparent 60%,
+    rgba(0, 0, 0, 0.6) 100%
+  );
+}
+
 @keyframes twinkle {
   from {
     opacity: 0.1;
@@ -68,5 +95,37 @@ const stars = Array.from({ length: 80 }, (_, i) => ({
     opacity: 0.8;
     transform: scale(1.2);
   }
+}
+</style>
+
+<style>
+/* Transition CRT entre les pages */
+.crt-enter-active,
+.crt-leave-active {
+  transition: all 0.2s steps(4);
+}
+
+.crt-enter-from {
+  opacity: 0;
+  transform: scaleY(0.02) scaleX(1.1);
+  filter: brightness(4);
+}
+
+.crt-enter-to {
+  opacity: 1;
+  transform: scaleY(1) scaleX(1);
+  filter: brightness(1);
+}
+
+.crt-leave-from {
+  opacity: 1;
+  transform: scaleY(1) scaleX(1);
+  filter: brightness(1);
+}
+
+.crt-leave-to {
+  opacity: 0;
+  transform: scaleY(0.02) scaleX(1.1);
+  filter: brightness(4);
 }
 </style>

@@ -2,17 +2,16 @@
   <!-- Écran d'accueil -->
   <div
     v-if="state === 'idle'"
-    class="absolute inset-0 flex flex-col items-center justify-center bg-game-bg/90 gap-6"
+    class="absolute inset-0 flex flex-col items-center justify-center bg-game-bg/90 gap-8"
   >
-    <p class="font-game text-game-accent text-lg">POULPENTIN</p>
-    <p class="text-slate-400 text-sm">
-      Utilise les flèches pour diriger le poulpe
-    </p>
-    <div class="flex gap-3">
-      <AppButton @click="$emit('start')">Démarrer</AppButton>
-      <AppButton variant="secondary" @click="$emit('demo')">
-        Démo IA
-      </AppButton>
+    <p class="font-game text-game-accent text-xl tracking-wider">POULPENTIN</p>
+
+    <!-- Texte clignotant -->
+    <p lang="en" class="font-game text-white text-xs blink">PRESS START</p>
+
+    <div class="flex gap-4 mt-2">
+      <AppButton @click="$emit('start')">Jouer</AppButton>
+      <AppButton variant="secondary" @click="$emit('demo')">Démo IA</AppButton>
     </div>
   </div>
 
@@ -43,7 +42,7 @@
     <p v-if="saveError" class="text-red-400 text-xs">{{ saveError }}</p>
     <p v-if="saved" class="text-green-400 text-xs">Score sauvegardé !</p>
 
-    <div class="flex gap-3 mt-2">
+    <div class="flex gap-5 mt-2 flex-wrap justify-center">
       <AppButton @click="$emit('start')">Rejouer</AppButton>
       <AppButton variant="secondary" @click="$emit('demo')">Démo IA</AppButton>
       <AppButton variant="secondary" @click="$emit('leaderboard')"
@@ -69,3 +68,19 @@ defineProps({
 
 defineEmits(["start", "demo", "leaderboard"]);
 </script>
+
+<style scoped>
+.blink {
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+</style>

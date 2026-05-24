@@ -52,7 +52,7 @@
             v-model="email"
             label="Email"
             type="email"
-            placeholder="ton@email.com"
+            placeholder="your@email.com"
             :required="true"
             autocomplete="email"
           />

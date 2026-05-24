@@ -1,6 +1,6 @@
 <template>
   <nav
-    class="relative z-20 bg-game-bg border-b-4 border-game-border px-6 py-3 flex items-center justify-between shadow-[0_4px_0_#000000]"
+    class="relative z-20 bg-game-bg border-b-4 border-game-border px-6 py-3 flex flex-wrap items-center gap-2 md:gap-0 justify-center sm:justify-between shadow-[0_4px_0_#000000]"
   >
     <!-- Logo -->
     <span
@@ -11,11 +11,11 @@
     </span>
 
     <!-- Navigation -->
-    <div class="flex items-center gap-6">
+    <div class="flex flex-wrap items-center justify-center gap-6 row-0">
       <!-- Liens nav -->
       <RouterLink
         to="/game"
-        class="font-game text-pixel-sm text-slate-500 hover:text-white transition-colors relative group uppercase"
+        class="font-game text-pixel-sm md:text-pixel-md text-slate-500 hover:text-white transition-colors relative group uppercase"
         active-class="!text-white"
       >
         PLAY
@@ -26,7 +26,7 @@
 
       <RouterLink
         to="/leaderboard"
-        class="font-game text-pixel-sm text-slate-500 hover:text-white transition-colors relative group uppercase"
+        class="font-game text-pixel-sm md:text-pixel-md text-slate-500 hover:text-white transition-colors relative group uppercase"
         active-class="!text-white"
       >
         SCORES
@@ -37,7 +37,7 @@
 
       <RouterLink
         to="/avatar"
-        class="font-game text-pixel-sm text-slate-500 hover:text-white transition-colors relative group uppercase"
+        class="font-game text-pixel-sm md:text-pixel-md text-slate-500 hover:text-white transition-colors relative group uppercase"
         active-class="!text-white"
       >
         AVATAR
@@ -47,7 +47,7 @@
       </RouterLink>
 
       <!-- Séparateur -->
-      <span class="text-game-border">|</span>
+      <span aria-hidden="true" class="text-game-border hidden md:block">|</span>
 
       <!-- Profil cliquable -->
       <RouterLink to="/profile" class="flex items-center gap-2 group">
@@ -59,7 +59,7 @@
         />
         <div v-else class="w-7 h-7 bg-game-border" />
         <span
-          class="font-game text-pixel-sm text-slate-400 group-hover:text-white transition-colors hidden sm:block uppercase"
+          class="font-game text-pixel-sm md:text-pixel-md text-slate-400 group-hover:text-white transition-colors hidden sm:block uppercase"
         >
           {{ auth.profile?.username }}
         </span>
@@ -68,7 +68,7 @@
       <!-- Déconnexion -->
       <button
         @click="$emit('logout')"
-        class="font-game text-pixel-sm text-game-accent hover:text-game-danger transition-colors uppercase"
+        class="font-game text-pixel-sm md:text-pixel-md text-game-accent hover:text-game-danger transition-colors uppercase"
       >
         EXIT
       </button>

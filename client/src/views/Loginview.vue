@@ -3,7 +3,7 @@
     <div class="w-full max-w-md">
       <div class="text-center mb-10">
         <h1 class="font-game text-game-accent text-2xl mb-2">POULPENTIN</h1>
-        <p class="text-slate-400 text-sm">Le snake aux tentacules</p>
+        <p class="text-slate-400 text-sm">The tentacled snake</p>
       </div>
 
       <AppCard>
@@ -17,7 +17,7 @@
             "
             class="flex-1 py-2 rounded-md text-sm font-medium transition-all"
           >
-            Connexion
+            Login
           </button>
           <button
             @click="mode = 'register'"
@@ -28,7 +28,7 @@
             "
             class="flex-1 py-2 rounded-md text-sm font-medium transition-all"
           >
-            Inscription
+            Register
           </button>
         </div>
 
@@ -36,8 +36,8 @@
           <AppInput
             v-if="mode === 'register'"
             v-model="username"
-            label="Nom d'utilisateur"
-            placeholder="ex : poulpe42"
+            label="Username"
+            placeholder="e.g.: poulpe42"
             :minlength="3"
             :maxlength="20"
             :required="true"
@@ -58,7 +58,7 @@
           />
           <AppInput
             v-model="password"
-            label="Mot de passe"
+            label="Password"
             type="password"
             placeholder="••••••••"
             :minlength="6"
@@ -80,10 +80,8 @@
           </p>
 
           <AppButton type="submit" class="mt-2" :disabled="loading">
-            <span v-if="loading">Chargement...</span>
-            <span v-else>{{
-              mode === "login" ? "Se connecter" : "S'inscrire"
-            }}</span>
+            <span v-if="loading">Loading...</span>
+            <span v-else>{{ mode === "login" ? "Login" : "Register" }}</span>
           </AppButton>
         </form>
       </AppCard>
@@ -122,11 +120,11 @@ async function handleSubmit() {
       router.push(auth.hasAvatar ? "/game" : "/avatar");
     } else {
       await auth.register(email.value, password.value, username.value);
-      successMsg.value = "Compte créé ! Connecte-toi.";
+      successMsg.value = "Account created! Please log in.";
       mode.value = "login";
     }
   } catch (e) {
-    error.value = e.message ?? "Une erreur est survenue.";
+    error.value = e.message ?? "An error occurred.";
   } finally {
     loading.value = false;
   }

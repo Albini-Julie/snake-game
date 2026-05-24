@@ -2,15 +2,18 @@
   <div class="min-h-screen px-4 py-10 max-w-2xl mx-auto">
     <!-- Titre -->
     <div class="text-center mb-8">
-      <p class="font-game text-slate-600 mb-2 text-pixel-sm">— POULPENTIN —</p>
+      <p class="font-game text-slate-600 mb-2 text-pixel-sm">
+        <span aria-hidden="true">—</span> POULPENTIN
+        <span aria-hidden="true">—</span>
+      </p>
       <h1
         class="font-game text-game-accent text-pixel-xl"
         style="text-shadow: 0 0 20px rgba(99, 102, 241, 0.8)"
       >
         AVATAR
       </h1>
-      <p class="font-game text-slate-600 mt-2 text-pixel-sm">
-        CHOISIS TON POULPE
+      <p class="font-game text-slate-600 mt-2 text-pixel-sm uppercase">
+        CHOOSE YOUR OCTOPUS
       </p>
     </div>
 
@@ -36,9 +39,9 @@
       <!-- Avatar actuel -->
       <p
         v-if="auth.profile?.avatars"
-        class="font-game text-slate-600 text-center text-pixel-sm"
+        class="font-game text-slate-600 text-center text-pixel-sm uppercase"
       >
-        ACTUEL :
+        CURRENT :
         <span class="text-slate-300">{{ auth.profile.avatars.name }}</span>
       </p>
 
@@ -51,23 +54,23 @@
       </p>
       <p
         v-if="saveSuccess"
-        class="font-game text-game-success text-center text-pixel-sm"
+        class="font-game text-game-success text-center text-pixel-sm uppercase"
       >
-        AVATAR MIS À JOUR !
+        AVATAR UPDATED !
       </p>
 
       <!-- Actions -->
       <div class="flex gap-4 justify-center">
         <AppButton @click="handleSave" :disabled="!selected || saving">
           <span v-if="saving">...</span>
-          <span v-else>Confirmer</span>
+          <span v-else>Choose</span>
         </AppButton>
         <AppButton
           v-if="auth.hasAvatar"
           variant="secondary"
           @click="router.push('/game')"
         >
-          Annuler
+          Cancel
         </AppButton>
       </div>
     </div>

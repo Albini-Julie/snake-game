@@ -2,7 +2,10 @@
   <div class="min-h-screen px-4 py-10 max-w-2xl mx-auto">
     <!-- Titre -->
     <div class="text-center mb-8">
-      <p class="font-game text-slate-600 mb-2 text-pixel-sm">— POULPENTIN —</p>
+      <p class="font-game text-slate-600 mb-2 text-pixel-sm">
+        <span aria-hidden="true">—</span> POULPENTIN
+        <span aria-hidden="true">—</span>
+      </p>
       <h1
         class="font-game text-game-accent text-pixel-xl"
         style="text-shadow: 0 0 20px rgba(99, 102, 241, 0.8)"
@@ -26,7 +29,7 @@
     <!-- Vide -->
     <div v-else-if="scores.length === 0" class="text-center py-20">
       <p class="font-game text-slate-500 mb-6 text-pixel-sm">NO SCORES YET</p>
-      <AppButton @click="router.push('/game')">Jouer</AppButton>
+      <AppButton @click="router.push('/game')">Play</AppButton>
     </div>
 
     <!-- Tableau -->
@@ -38,16 +41,19 @@
           class="flex items-center gap-4 px-4 py-2 border-b-2 border-game-accent/40 bg-game-bg/60"
         >
           <span
-            class="font-game text-game-accent w-8 text-center shrink-0 text-pixel-sm"
+            class="font-game text-game-accent w-8 text-center shrink-0 text-pixel-sm uppercase"
             >RK</span
           >
           <span class="w-7 shrink-0" />
-          <span class="font-game text-game-accent flex-1 text-pixel-sm"
+          <span
+            class="font-game text-game-accent flex-1 text-pixel-sm uppercase"
             >PLAYER</span
           >
-          <span class="font-game text-game-accent text-pixel-sm">SCORE</span>
+          <span class="font-game text-game-accent text-pixel-sm uppercase"
+            >SCORE</span
+          >
           <span
-            class="font-game text-game-accent w-12 text-right shrink-0 text-pixel-sm"
+            class="font-game text-game-accent w-12 text-right shrink-0 text-pixel-sm uppercase"
             >TIME</span
           >
         </div>
@@ -63,9 +69,12 @@
           v-if="scores.length > 3"
           class="px-4 py-1 border-b border-game-border/40"
         >
-          <p class="font-game text-slate-700 text-center text-pixel-sm">
+          <span
+            aria-hidden="true"
+            class="font-game text-slate-700 text-center text-pixel-sm"
+          >
             — — —
-          </p>
+          </span>
         </div>
 
         <!-- Rangs 4-10 -->
@@ -83,7 +92,8 @@
         <div v-if="myBestOutside" class="border-t-2 border-game-accent/40 mt-1">
           <div class="px-4 py-1">
             <p class="font-game text-game-accent text-center text-pixel-sm">
-              — YOUR BEST —
+              <span aria-hidden="true">—</span> YOUR BEST
+              <span aria-hidden="true">—</span>
             </p>
           </div>
           <LeaderboardRow
@@ -99,8 +109,8 @@
 
       <!-- Actions -->
       <div class="flex justify-center gap-4">
-        <AppButton @click="router.push('/game')">Jouer</AppButton>
-        <AppButton variant="secondary" @click="load">Actualiser</AppButton>
+        <AppButton @click="router.push('/game')">Play</AppButton>
+        <AppButton variant="secondary" @click="load">Refresh</AppButton>
       </div>
     </div>
   </div>

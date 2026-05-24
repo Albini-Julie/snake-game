@@ -12,8 +12,8 @@
     </p>
 
     <div class="flex gap-4 mt-2">
-      <AppButton @click="$emit('start')">Jouer</AppButton>
-      <AppButton variant="secondary" @click="$emit('demo')">Démo IA</AppButton>
+      <AppButton @click="$emit('start')">Play</AppButton>
+      <AppButton variant="secondary" @click="$emit('demo')">Demo AI</AppButton>
     </div>
   </div>
 
@@ -25,7 +25,7 @@
     <p class="font-game text-red-400 text-lg">GAME OVER</p>
     <p class="text-slate-300 text-sm">
       Score : {{ score }}
-      <span v-if="wasDemo" class="text-slate-500 ml-2">(démo IA)</span>
+      <span v-if="wasDemo" class="text-slate-500 ml-2">(demo AI)</span>
     </p>
 
     <!-- Conseil IA -->
@@ -33,7 +33,7 @@
       class="w-full max-w-xs text-center min-h-[48px] flex items-center justify-center"
     >
       <p v-if="adviceLoading" class="text-slate-500 italic">
-        Le coach marin réfléchit...
+        The sailing coach is thinking...
       </p>
       <p v-else-if="advice" class="text-slate-300 italic leading-relaxed">
         "{{ advice }}"
@@ -41,16 +41,16 @@
     </div>
 
     <p v-if="saving" class="text-slate-400 text-pixel-sm">
-      Sauvegarde du score...
+      Saving the score...
     </p>
     <p v-if="saveError" class="text-red-400 text-pixel-sm">{{ saveError }}</p>
-    <p v-if="saved" class="text-green-400 text-pixel-sm">Score sauvegardé !</p>
+    <p v-if="saved" class="text-green-400 text-pixel-sm">Score saved !</p>
 
     <div class="flex gap-5 mt-2 flex-wrap justify-center">
-      <AppButton @click="$emit('start')">Rejouer</AppButton>
-      <AppButton variant="secondary" @click="$emit('demo')">Démo IA</AppButton>
+      <AppButton @click="$emit('start')">Play again</AppButton>
+      <AppButton variant="secondary" @click="$emit('demo')">Demo AI</AppButton>
       <AppButton variant="secondary" @click="$emit('leaderboard')"
-        >Classement</AppButton
+        >Leaderboard</AppButton
       >
     </div>
   </div>

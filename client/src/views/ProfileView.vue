@@ -2,7 +2,10 @@
   <div class="min-h-screen px-4 py-10 max-w-xl mx-auto">
     <!-- Titre -->
     <div class="text-center mb-8">
-      <p class="font-game text-slate-600 mb-2 text-pixel-sm">— POULPENTIN —</p>
+      <p class="font-game text-slate-600 mb-2 text-pixel-sm">
+        <span aria-hidden="true">—</span> POULPENTIN
+        <span aria-hidden="true">—</span>
+      </p>
       <h1
         class="font-game text-game-accent text-pixel-xl"
         style="text-shadow: 0 0 20px rgba(99, 102, 241, 0.8)"
@@ -43,7 +46,7 @@
 
         <div class="mt-4 flex justify-end">
           <AppButton variant="secondary" @click="router.push('/avatar')">
-            Avatar change
+            Change your avatar
           </AppButton>
         </div>
       </AppCard>
@@ -51,7 +54,9 @@
       <!-- Stats -->
       <div class="shadow-pixel-card bg-game-surface/60">
         <div class="px-4 py-2 border-b-2 border-game-accent/40 bg-game-bg/60">
-          <p class="font-game text-game-accent text-pixel-sm">STATISTICS</p>
+          <p class="font-game text-game-accent text-pixel-sm uppercase">
+            STATISTICS
+          </p>
         </div>
 
         <div class="grid grid-cols-2 gap-px bg-game-border/20">
@@ -154,11 +159,13 @@ onMounted(async () => {
 
 function formatDate(dateStr) {
   if (!dateStr) return "--";
-  return new Date(dateStr).toLocaleDateString("fr-FR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+  return new Date(dateStr)
+    .toLocaleDateString("en-US", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    })
+    .toUpperCase();
 }
 
 function formatTotalDuration(seconds) {

@@ -25,7 +25,10 @@
           @error="(e) => (e.target.style.display = 'none')"
         />
         <div v-else class="w-10 h-10 bg-game-border" />
-        <span v-if="i === 0" class="absolute -top-3 left-1/2 -translate-x-1/2"
+        <span
+          aria-hidden="true"
+          v-if="i === 0"
+          class="absolute -top-3 left-1/2 -translate-x-1/2"
           >👑</span
         >
       </div>

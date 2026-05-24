@@ -53,9 +53,9 @@
     <!-- Info mode démo -->
     <p
       v-if="game.isDemo.value && game.state.value === 'playing'"
-      class="font-game text-slate-600 text-center text-pixel-sm"
+      class="font-game text-slate-600 text-center text-pixel-sm uppercase"
     >
-      L'IA CONTRÔLE LE POULPE
+      IA controls the octopus
     </p>
   </div>
 </template>
@@ -78,12 +78,12 @@ const auth = useAuthStore();
 const canvasRef = ref(null);
 
 const AVATAR_COLORS = {
-  "Poulpe bleu": 210,
-  "Poulpe rouge": 0,
-  "Poulpe vert": 140,
-  "Poulpe doré": 40,
-  "Poulpe violet": 270,
-  "Poulpe noir": 300,
+  "Blue Octopus": 210,
+  "Red Octopus": 0,
+  "Green Octopus": 140,
+  "Gold Octopus": 40,
+  "Purple Octopus": 270,
+  "Dark Octopus": 300,
 };
 
 const avatarColor = computed(

@@ -7,17 +7,19 @@
 
     <!-- Navigation -->
     <div class="flex items-center gap-4">
-      <div class="flex items-center gap-2 mr-2">
-        <img
-          v-if="auth.profile?.avatars?.path"
-          :src="auth.profile.avatars.path"
-          :alt="auth.profile.username"
-          class="w-8 h-8 object-contain rounded-full border border-game-border"
-        />
-        <span class="text-slate-300 text-sm hidden sm:block">
-          {{ auth.profile?.username }}
-        </span>
-      </div>
+      <RouterLink to="/profile" class="flex items-center gap-2 group">
+        <div class="flex items-center gap-2 mr-2">
+          <img
+            v-if="auth.profile?.avatars?.path"
+            :src="auth.profile.avatars.path"
+            :alt="auth.profile.username"
+            class="w-8 h-8 object-contain rounded-full border border-game-border"
+          />
+          <span class="text-slate-300 text-sm hidden sm:block">
+            {{ auth.profile?.username }}
+          </span>
+        </div>
+      </RouterLink>
       <RouterLink
         to="/game"
         class="text-slate-400 hover:text-white text-sm transition-colors"

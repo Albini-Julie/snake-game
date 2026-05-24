@@ -1,56 +1,74 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center px-4 py-12">
-    <div class="w-full max-w-2xl">
-      <div class="text-center mb-10">
-        <h1 class="font-game text-game-accent text-xl mb-3">
-          Choisis ton avatar
-        </h1>
-        <p class="text-slate-400 text-sm">Il apparaîtra sur le leaderboard</p>
-      </div>
+  <div class="min-h-screen px-4 py-10 max-w-2xl mx-auto">
+    <!-- Titre -->
+    <div class="text-center mb-8">
+      <p class="font-game text-slate-600 mb-2 text-pixel-sm">— POULPENTIN —</p>
+      <h1
+        class="font-game text-game-accent text-pixel-xl"
+        style="text-shadow: 0 0 20px rgba(99, 102, 241, 0.8)"
+      >
+        AVATAR
+      </h1>
+      <p class="font-game text-slate-600 mt-2 text-pixel-sm">
+        CHOISIS TON POULPE
+      </p>
+    </div>
 
-      <div v-if="loading" class="text-center text-slate-400 py-20">
-        Chargement des avatars...
-      </div>
-      <div v-else-if="error" class="text-red-400 text-center py-10">
+    <!-- Chargement -->
+    <div v-if="loading" class="text-center py-20">
+      <p class="font-game text-game-accent blink text-pixel-sm">LOADING...</p>
+    </div>
+
+    <div v-else-if="error" class="text-center py-10">
+      <p class="font-game text-game-danger text-pixel-sm">
         {{ error }}
-      </div>
+      </p>
+    </div>
 
-      <div v-else>
-        <AvatarGrid
-          :avatars="avatars"
-          :selected="selected"
-          @select="selected = $event"
-          class="mb-8"
-        />
+    <div v-else class="flex flex-col gap-6">
+      <!-- Grille avatars -->
+      <AvatarGrid
+        :avatars="avatars"
+        :selected="selected"
+        @select="selected = $event"
+      />
 
-        <p
-          v-if="auth.profile?.avatars"
-          class="text-center text-slate-500 text-sm mb-6"
+      <!-- Avatar actuel -->
+      <p
+        v-if="auth.profile?.avatars"
+        class="font-game text-slate-600 text-center text-pixel-sm"
+      >
+        ACTUEL :
+        <span class="text-slate-300">{{ auth.profile.avatars.name }}</span>
+      </p>
+
+      <!-- Messages -->
+      <p
+        v-if="saveError"
+        class="font-game text-game-danger text-center text-pixel-sm"
+      >
+        {{ saveError }}
+      </p>
+      <p
+        v-if="saveSuccess"
+        class="font-game text-game-success text-center text-pixel-sm"
+      >
+        AVATAR MIS À JOUR !
+      </p>
+
+      <!-- Actions -->
+      <div class="flex gap-4 justify-center">
+        <AppButton @click="handleSave" :disabled="!selected || saving">
+          <span v-if="saving">...</span>
+          <span v-else>Confirmer</span>
+        </AppButton>
+        <AppButton
+          v-if="auth.hasAvatar"
+          variant="secondary"
+          @click="router.push('/game')"
         >
-          Avatar actuel :
-          <span class="text-slate-300">{{ auth.profile.avatars.name }}</span>
-        </p>
-
-        <p v-if="saveError" class="text-red-400 text-sm text-center mb-4">
-          {{ saveError }}
-        </p>
-        <p v-if="saveSuccess" class="text-green-400 text-sm text-center mb-4">
-          Avatar mis à jour !
-        </p>
-
-        <div class="flex gap-3 justify-center">
-          <AppButton @click="handleSave" :disabled="!selected || saving">
-            <span v-if="saving">Sauvegarde...</span>
-            <span v-else>Confirmer</span>
-          </AppButton>
-          <AppButton
-            v-if="auth.hasAvatar"
-            variant="secondary"
-            @click="router.push('/game')"
-          >
-            Annuler
-          </AppButton>
-        </div>
+          Annuler
+        </AppButton>
       </div>
     </div>
   </div>
@@ -81,7 +99,7 @@ onMounted(async () => {
     const { data } = await api.get("/avatars");
     avatars.value = data;
   } catch {
-    error.value = "Impossible de charger les avatars.";
+    error.value = "LOADING ERROR";
   } finally {
     loading.value = false;
   }
@@ -97,9 +115,24 @@ async function handleSave() {
     saveSuccess.value = true;
     setTimeout(() => router.push("/game"), 800);
   } catch {
-    saveError.value = "Erreur lors de la mise à jour de l'avatar.";
+    saveError.value = "ERREUR MISE À JOUR";
   } finally {
     saving.value = false;
   }
 }
 </script>
+
+<style scoped>
+.blink {
+  animation: blink 1s steps(1) infinite;
+}
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+</style>

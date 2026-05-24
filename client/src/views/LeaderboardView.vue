@@ -1,59 +1,107 @@
 <template>
-  <div class="min-h-screen px-4 py-12 max-w-2xl mx-auto">
-    <div class="text-center mb-10">
-      <h1 class="font-game text-game-accent text-xl mb-3">CLASSEMENT</h1>
-      <p class="text-slate-400 text-sm">Les meilleurs poulpentins</p>
+  <div class="min-h-screen px-4 py-10 max-w-2xl mx-auto">
+    <!-- Titre -->
+    <div class="text-center mb-8">
+      <p class="font-game text-slate-600 mb-2 text-pixel-sm">— POULPENTIN —</p>
+      <h1
+        class="font-game text-game-accent text-pixel-xl"
+        style="text-shadow: 0 0 20px rgba(99, 102, 241, 0.8)"
+      >
+        HIGH SCORES
+      </h1>
     </div>
 
-    <div v-if="loading" class="text-center text-slate-400 py-20">
-      Chargement...
-    </div>
-    <div v-else-if="error" class="text-red-400 text-center py-10">
-      {{ error }}
+    <!-- Chargement -->
+    <div v-if="loading" class="text-center py-20">
+      <p class="font-game text-game-accent blink text-pixel-sm">LOADING...</p>
     </div>
 
-    <div
-      v-else-if="scores.length === 0"
-      class="text-center text-slate-500 py-20"
-    >
-      <p class="mb-2">Aucun score enregistré.</p>
-      <RouterLink to="/game" class="text-game-accent text-sm hover:underline">
-        Sois le premier à jouer !
-      </RouterLink>
+    <!-- Erreur -->
+    <div v-else-if="error" class="text-center py-10">
+      <p class="font-game text-game-danger text-pixel-sm">
+        {{ error }}
+      </p>
     </div>
 
-    <div v-else class="flex flex-col gap-3">
-      <LeaderboardTop3 :entries="scores.slice(0, 3)" />
-
-      <LeaderboardRow
-        v-for="(entry, i) in scores.slice(3)"
-        :key="entry.id"
-        :rank="i + 4"
-        :username="entry.users?.username"
-        :avatar-path="entry.users?.avatars?.path"
-        :score="entry.value"
-        :duration="entry.duration"
-      />
-
-      <!-- Score du joueur hors top 10 -->
-      <div v-if="myBestOutside" class="mt-4 border-t border-game-border pt-4">
-        <p class="text-slate-500 text-xs text-center mb-3">
-          Ton meilleur score
-        </p>
-        <LeaderboardRow
-          :rank="myBestOutside.rank"
-          :username="auth.profile?.username"
-          :avatar-path="auth.profile?.avatars?.path"
-          :score="myBestOutside.value"
-          :duration="myBestOutside.duration"
-          :highlighted="true"
-        />
-      </div>
-    </div>
-
-    <div class="flex justify-center gap-3 mt-10">
+    <!-- Vide -->
+    <div v-else-if="scores.length === 0" class="text-center py-20">
+      <p class="font-game text-slate-500 mb-6 text-pixel-sm">NO SCORES YET</p>
       <AppButton @click="router.push('/game')">Jouer</AppButton>
-      <AppButton variant="secondary" @click="load">Actualiser</AppButton>
+    </div>
+
+    <!-- Tableau -->
+    <div v-else class="flex flex-col gap-6">
+      <!-- Tableau arcade -->
+      <div class="shadow-pixel-card bg-game-surface/60">
+        <!-- Header -->
+        <div
+          class="flex items-center gap-4 px-4 py-2 border-b-2 border-game-accent/40 bg-game-bg/60"
+        >
+          <span
+            class="font-game text-game-accent w-8 text-center shrink-0 text-pixel-sm"
+            >RK</span
+          >
+          <span class="w-7 shrink-0" />
+          <span class="font-game text-game-accent flex-1 text-pixel-sm"
+            >PLAYER</span
+          >
+          <span class="font-game text-game-accent text-pixel-sm">SCORE</span>
+          <span
+            class="font-game text-game-accent w-12 text-right shrink-0 text-pixel-sm"
+            >TIME</span
+          >
+        </div>
+
+        <!-- Top 3 -->
+        <LeaderboardTop3
+          v-if="scores.length >= 3"
+          :entries="scores.slice(0, 3)"
+        />
+
+        <!-- Séparateur -->
+        <div
+          v-if="scores.length > 3"
+          class="px-4 py-1 border-b border-game-border/40"
+        >
+          <p class="font-game text-slate-700 text-center text-pixel-sm">
+            — — —
+          </p>
+        </div>
+
+        <!-- Rangs 4-10 -->
+        <LeaderboardRow
+          v-for="(entry, i) in scores.slice(3)"
+          :key="entry.id"
+          :rank="i + 4"
+          :username="entry.users?.username"
+          :avatar-path="entry.users?.avatars?.path"
+          :score="entry.value"
+          :duration="entry.duration"
+        />
+
+        <!-- Score du joueur hors top 10 -->
+        <div v-if="myBestOutside" class="border-t-2 border-game-accent/40 mt-1">
+          <div class="px-4 py-1">
+            <p class="font-game text-game-accent text-center text-pixel-sm">
+              — YOUR BEST —
+            </p>
+          </div>
+          <LeaderboardRow
+            :rank="myBestOutside.rank"
+            :username="auth.profile?.username"
+            :avatar-path="auth.profile?.avatars?.path"
+            :score="myBestOutside.value"
+            :duration="myBestOutside.duration"
+            :highlighted="true"
+          />
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex justify-center gap-4">
+        <AppButton @click="router.push('/game')">Jouer</AppButton>
+        <AppButton variant="secondary" @click="load">Actualiser</AppButton>
+      </div>
     </div>
   </div>
 </template>
@@ -96,7 +144,7 @@ async function load() {
       myScore.value = { ...best, rank };
     }
   } catch {
-    error.value = "Impossible de charger le classement.";
+    error.value = "LOADING ERROR";
   } finally {
     loading.value = false;
   }
@@ -104,3 +152,18 @@ async function load() {
 
 onMounted(load);
 </script>
+
+<style scoped>
+.blink {
+  animation: blink 1s steps(1) infinite;
+}
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+</style>

@@ -7,7 +7,9 @@
     <p class="font-game text-game-accent text-xl tracking-wider">POULPENTIN</p>
 
     <!-- Texte clignotant -->
-    <p lang="en" class="font-game text-white text-xs blink">PRESS START</p>
+    <p lang="en" class="font-game text-white text-pixel-sm blink">
+      PRESS START
+    </p>
 
     <div class="flex gap-4 mt-2">
       <AppButton @click="$emit('start')">Jouer</AppButton>
@@ -38,9 +40,11 @@
       </p>
     </div>
 
-    <p v-if="saving" class="text-slate-400 text-xs">Sauvegarde du score...</p>
-    <p v-if="saveError" class="text-red-400 text-xs">{{ saveError }}</p>
-    <p v-if="saved" class="text-green-400 text-xs">Score sauvegardé !</p>
+    <p v-if="saving" class="text-slate-400 text-pixel-sm">
+      Sauvegarde du score...
+    </p>
+    <p v-if="saveError" class="text-red-400 text-pixel-sm">{{ saveError }}</p>
+    <p v-if="saved" class="text-green-400 text-pixel-sm">Score sauvegardé !</p>
 
     <div class="flex gap-5 mt-2 flex-wrap justify-center">
       <AppButton @click="$emit('start')">Rejouer</AppButton>

@@ -87,4 +87,31 @@ router.get('/me', authMiddleware, async (req, res) => {
   res.json(data)
 })
 
+/**
+ * GET /scores/stats
+ * Retourne les stats du joueur connecté
+ */
+router.get('/stats', authMiddleware, async (req, res) => {
+  const { data, error } = await supabase
+    .from('scores')
+    .select('value, duration')
+    .eq('user_id', req.user.id)
+    .limit(10)
+
+  if (error) {
+    return res.status(500).json({ error: 'Erreur lors de la récupération des stats' })
+  }
+
+  if (data.length === 0) {
+    return res.json({ played: 0, best: 0, average: 0, totalDuration: 0 })
+  }
+
+  const played        = data.length
+  const best          = Math.max(...data.map(s => s.value))
+  const average       = Math.round(data.reduce((sum, s) => sum + s.value, 0) / played)
+  const totalDuration = data.reduce((sum, s) => sum + (s.duration ?? 0), 0)
+
+  res.json({ played, best, average, totalDuration })
+})
+
 export default router

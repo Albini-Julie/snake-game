@@ -2,8 +2,7 @@
   <div class="flex flex-col gap-1.5">
     <label
       v-if="label"
-      class="font-game text-slate-400 uppercase tracking-widest"
-      style="font-size: 0.55rem"
+      class="font-game text-slate-400 uppercase tracking-widest text-pixel-sm"
     >
       {{ label }}
     </label>
@@ -22,8 +21,7 @@
         @input="$emit('update:modelValue', $event.target.value)"
         @focus="focused = true"
         @blur="focused = false"
-        class="w-full px-3 py-2.5 bg-transparent text-slate-200 font-game outline-none placeholder-slate-700 caret-game-accent"
-        style="font-size: 0.6rem"
+        class="w-full px-3 py-2.5 bg-transparent text-slate-200 font-game outline-none placeholder-slate-700 caret-game-accent text-pixel-sm"
       />
     </div>
   </div>

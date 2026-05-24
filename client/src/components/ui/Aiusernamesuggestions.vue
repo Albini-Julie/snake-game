@@ -1,24 +1,24 @@
 <template>
   <div class="mt-3">
     <div class="flex items-center gap-2 mb-2">
-      <span class="text-xs text-slate-500">Pseudos suggérés par IA</span>
+      <span class="text-pixel-sm text-slate-500">Pseudos suggérés par IA</span>
       <button
         @click="generate"
         :disabled="loading"
-        class="text-xs text-game-accent hover:text-indigo-400 transition-colors disabled:opacity-50"
+        class="text-pixel-sm text-game-accent hover:text-indigo-400 transition-colors disabled:opacity-50"
       >
         {{ loading ? "Génération..." : "↺ Relancer" }}
       </button>
     </div>
 
-    <div v-if="error" class="text-red-400 text-xs">{{ error }}</div>
+    <div v-if="error" class="text-red-400 text-pixel-sm">{{ error }}</div>
 
     <div v-else class="flex gap-2 flex-wrap">
       <button
         v-for="name in usernames"
         :key="name"
         @click="$emit('select', name)"
-        class="px-3 py-1 rounded-full bg-game-bg border border-game-border hover:border-game-accent text-slate-300 hover:text-white text-xs transition-all"
+        class="px-3 py-1 rounded-full bg-game-bg border border-game-border hover:border-game-accent text-slate-300 hover:text-white text-pixel-sm transition-all"
       >
         {{ name }}
       </button>

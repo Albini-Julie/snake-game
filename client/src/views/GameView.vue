@@ -8,8 +8,9 @@
       :level="game.level.value"
     />
 
+    <!-- Canvas sans rounded -->
     <div
-      class="relative border-2 border-game-border rounded-xl overflow-hidden"
+      class="relative border-2 border-game-border overflow-hidden"
       :style="{ width: CANVAS_W + 'px', height: CANVAS_H + 'px' }"
     >
       <canvas
@@ -40,39 +41,21 @@
       class="grid grid-cols-3 gap-2 mt-2 sm:hidden"
     >
       <div />
-      <AppButton
-        variant="secondary"
-        @click="emitKey('ArrowUp')"
-        class="py-4 text-lg"
-        >↑</AppButton
-      >
+      <AppButton variant="secondary" @click="emitKey('ArrowUp')">▲</AppButton>
       <div />
-      <AppButton
-        variant="secondary"
-        @click="emitKey('ArrowLeft')"
-        class="py-4 text-lg"
-        >←</AppButton
-      >
-      <AppButton
-        variant="secondary"
-        @click="emitKey('ArrowDown')"
-        class="py-4 text-lg"
-        >↓</AppButton
-      >
-      <AppButton
-        variant="secondary"
-        @click="emitKey('ArrowRight')"
-        class="py-4 text-lg"
-        >→</AppButton
+      <AppButton variant="secondary" @click="emitKey('ArrowLeft')">◄</AppButton>
+      <AppButton variant="secondary" @click="emitKey('ArrowDown')">▼</AppButton>
+      <AppButton variant="secondary" @click="emitKey('ArrowRight')"
+        >►</AppButton
       >
     </div>
 
     <!-- Info mode démo -->
     <p
       v-if="game.isDemo.value && game.state.value === 'playing'"
-      class="text-slate-500 text-xs"
+      class="font-game text-slate-600 text-center text-pixel-sm"
     >
-      L'IA contrôle le poulpe — appuie sur une flèche pour reprendre la main
+      L'IA CONTRÔLE LE POULPE
     </p>
   </div>
 </template>
@@ -142,8 +125,6 @@ async function startDemo() {
 
 watch(game.state, async (val) => {
   if (val !== "dead" || game.score.value === 0) return;
-
-  // En mode démo, pas de sauvegarde du score
   if (game.isDemo.value) return;
 
   saving.value = true;

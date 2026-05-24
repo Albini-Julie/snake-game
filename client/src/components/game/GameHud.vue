@@ -3,22 +3,22 @@
     <!-- Scores -->
     <div class="flex items-center gap-8">
       <div class="text-center">
-        <p class="text-slate-500 text-xs mb-1">SCORE</p>
+        <p class="text-slate-500 text-pixel-sm mb-1">SCORE</p>
         <p class="font-game text-white text-2xl">{{ score }}</p>
       </div>
       <div class="text-center">
-        <p class="text-slate-500 text-xs mb-1">MEILLEUR</p>
+        <p class="text-slate-500 text-pixel-sm mb-1">MEILLEUR</p>
         <p class="font-game text-game-accent text-2xl">{{ bestScore }}</p>
       </div>
       <div class="text-center">
-        <p class="text-slate-500 text-xs mb-1">NIVEAU</p>
+        <p class="text-slate-500 text-pixel-sm mb-1">NIVEAU</p>
         <p class="font-game text-white text-2xl">{{ level }}</p>
       </div>
     </div>
 
     <!-- Barre de progression vers le niveau suivant -->
     <div class="flex items-center gap-3 w-full max-w-xs">
-      <p class="font-game text-slate-600 shrink-0" style="font-size: 0.4rem">
+      <p class="font-game text-slate-600 shrink-0 text-pixel-sm">
         LVL {{ level }}
       </p>
 
@@ -44,7 +44,7 @@
         />
       </div>
 
-      <p class="font-game text-slate-600 shrink-0" style="font-size: 0.4rem">
+      <p class="font-game text-slate-600 shrink-0 text-pixel-sm">
         {{ level < 5 ? `LVL ${level + 1}` : "MAX" }}
       </p>
     </div>

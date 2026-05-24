@@ -4,21 +4,23 @@
       v-for="avatar in avatars"
       :key="avatar.id"
       @click="$emit('select', avatar.id)"
-      :class="
+      :class="[
+        'bg-game-surface p-4 flex flex-col items-center gap-3 transition-all duration-100',
         selected === avatar.id
-          ? 'border-game-accent ring-2 ring-game-accent ring-offset-2 ring-offset-game-bg'
-          : 'border-game-border hover:border-game-accent'
-      "
-      class="bg-game-surface border rounded-xl p-4 flex flex-col items-center gap-3 transition-all duration-200"
+          ? 'shadow-pixel-primary outline outline-2 outline-game-accent'
+          : 'shadow-pixel-secondary hover:outline hover:outline-1 hover:outline-game-accent',
+      ]"
     >
       <img
         :src="avatar.path"
         :alt="avatar.name"
         class="w-16 h-16 object-contain"
       />
-      <span class="text-xs text-slate-300 text-center leading-tight">{{
-        avatar.name
-      }}</span>
+      <span
+        class="font-game text-slate-300 text-center leading-tight text-pixel-sm"
+      >
+        {{ avatar.name }}
+      </span>
     </button>
   </div>
 </template>

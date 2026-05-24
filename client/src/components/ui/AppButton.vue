@@ -3,7 +3,7 @@
     :type="type"
     :disabled="disabled"
     :class="[
-      'relative overflow-visible font-game text-xs uppercase tracking-wider cursor-pointer border-none transition-all duration-75',
+      'relative overflow-visible font-game text-pixel-sm uppercase tracking-wider cursor-pointer border-none transition-all duration-75',
       'px-6 py-3',
       variant === 'primary'
         ? 'bg-game-accent text-white shadow-pixel-primary hover:shadow-pixel-primary active:translate-y-1 active:shadow-none'

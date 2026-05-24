@@ -70,8 +70,8 @@ import AppButton from "@/components/ui/AppButton.vue";
 import GameHud from "@/components/game/GameHud.vue";
 import GameOverlay from "@/components/game/GameOverlay.vue";
 
-const CANVAS_W = 400;
-const CANVAS_H = 400;
+const CANVAS_W = window.innerWidth < 640 ? 320 : 400;
+const CANVAS_H = window.innerWidth < 640 ? 320 : 400;
 
 const router = useRouter();
 const auth = useAuthStore();

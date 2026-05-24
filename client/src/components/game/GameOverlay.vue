@@ -12,7 +12,7 @@
     </p>
 
     <div class="flex gap-4 mt-2">
-      <AppButton @click="$emit('start')">Play</AppButton>
+      <AppButton @click="$emit('start')">Start</AppButton>
       <AppButton variant="secondary" @click="$emit('demo')">Demo AI</AppButton>
     </div>
   </div>
@@ -49,7 +49,10 @@
     <div class="flex gap-5 mt-2 flex-wrap justify-center">
       <AppButton @click="$emit('start')">Play again</AppButton>
       <AppButton variant="secondary" @click="$emit('demo')">Demo AI</AppButton>
-      <AppButton variant="secondary" @click="$emit('leaderboard')"
+      <AppButton
+        variant="secondary"
+        @click="$emit('leaderboard')"
+        class="hidden md:block"
         >Leaderboard</AppButton
       >
     </div>

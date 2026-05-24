@@ -7,8 +7,7 @@
         <span aria-hidden="true">—</span>
       </p>
       <h1
-        class="font-game text-game-accent text-pixel-xl"
-        style="text-shadow: 0 0 20px rgba(99, 102, 241, 0.8)"
+        class="text-shadow-accent-glow font-game text-game-accent text-pixel-xl"
       >
         HIGH SCORES
       </h1>
@@ -63,19 +62,6 @@
           v-if="scores.length >= 3"
           :entries="scores.slice(0, 3)"
         />
-
-        <!-- Séparateur -->
-        <div
-          v-if="scores.length > 3"
-          class="px-4 py-1 border-b border-game-border/40"
-        >
-          <span
-            aria-hidden="true"
-            class="font-game text-slate-700 text-center text-pixel-sm"
-          >
-            — — —
-          </span>
-        </div>
 
         <!-- Rangs 4-10 -->
         <LeaderboardRow

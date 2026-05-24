@@ -7,8 +7,7 @@
         <span aria-hidden="true">—</span>
       </p>
       <h1
-        class="font-game text-game-accent text-pixel-xl"
-        style="text-shadow: 0 0 20px rgba(99, 102, 241, 0.8)"
+        class="text-shadow-accent-glow font-game text-game-accent text-pixel-xl"
       >
         PROFILE
       </h1>

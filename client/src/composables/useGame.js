@@ -2,7 +2,7 @@ import { ref, onUnmounted } from 'vue'
 import axios from 'axios'
 
 const CELL       = 20
-const SPEEDS     = [150, 120, 90, 65, 45]
+const SPEEDS = [200, 165, 130, 95, 65]
 const DIRECTIONS = {
   ArrowUp:    { x: 0,  y: -1 },
   ArrowDown:  { x: 0,  y:  1 },

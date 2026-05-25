@@ -12,7 +12,7 @@
     <!-- Navigation -->
     <div class="flex flex-wrap items-center justify-center gap-6">
       <RouterLink
-        to="/game"
+        to="/lobby"
         class="font-game text-pixel-sm md:text-pixel-md text-slate-500 hover:text-game-accent hover:text-shadow-accent-glow transition-colors uppercase"
         active-class="!text-game-accent text-shadow-accent-glow"
       >
@@ -53,7 +53,6 @@
           {{ auth.profile?.username }}
         </span>
       </RouterLink>
-
       <!-- Déconnexion -->
       <button
         @click="$emit('logout')"

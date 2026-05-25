@@ -12,8 +12,8 @@
             : 'bg-amber-700/5',
       ]"
     >
-      <!-- Médaille -->
-      <span class="text-pixel-xl">{{ MEDALS[i] }}</span>
+      <!-- Médaille SVG -->
+      <AppIcon :name="MEDAL_NAMES[i]" size="lg" />
 
       <!-- Avatar -->
       <div class="relative">
@@ -25,12 +25,6 @@
           @error="(e) => (e.target.style.display = 'none')"
         />
         <div v-else class="w-10 h-10 bg-game-border" />
-        <span
-          aria-hidden="true"
-          v-if="i === 0"
-          class="absolute -top-3 left-1/2 -translate-x-1/2"
-          >👑</span
-        >
       </div>
 
       <!-- Pseudo -->
@@ -64,7 +58,8 @@
 </template>
 
 <script setup>
-const MEDALS = ["🥇", "🥈", "🥉"];
+import AppIcon from "@/components/ui/AppIcon.vue";
+const MEDAL_NAMES = ["first", "secondary", "third"];
 
 defineProps({
   entries: { type: Array, required: true },

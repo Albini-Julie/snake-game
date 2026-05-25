@@ -1,5 +1,6 @@
 import { ref, onUnmounted } from 'vue'
 import { io } from 'socket.io-client'
+import { useAuthStore } from '@/stores/auth'
 
 const CELL = 20
 const COLS = 20
@@ -291,21 +292,20 @@ export function useMultiplayer(canvasRef) {
   // Actions publiques
   function joinMatchmaking(username) {
     if (!socket) connect()
-    state.value    = 'idle'
-    errorMsg.value = ''
-    socket.emit('matchmaking:join', { username })
+    const auth = useAuthStore()
+    socket.emit('matchmaking:join', { username, userId: auth.user?.id })
   }
 
   function createRoom(username) {
     if (!socket) connect()
-    errorMsg.value = ''
-    socket.emit('room:create', { username })
+    const auth = useAuthStore()
+    socket.emit('room:create', { username, userId: auth.user?.id })
   }
 
   function joinRoom(username, code) {
     if (!socket) connect()
-    errorMsg.value = ''
-    socket.emit('room:join', { username, roomId: code })
+    const auth = useAuthStore()
+    socket.emit('room:join', { username, roomId: code, userId: auth.user?.id })
   }
 
   function sendDirection(direction) {

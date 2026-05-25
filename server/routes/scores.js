@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import supabase from '../config/supabase.js'
 import authMiddleware from '../middleware/auth.js'
+import { checkAchievements } from './achievements.js'
 
 const router = Router()
 
@@ -11,31 +12,32 @@ const MAX_SCORE_PER_SECOND = 2
  // Enregistre un score en fin de partie
  // Body : { score: number, duration: number }
 router.post('/', authMiddleware, async (req, res) => {
-  const { score, duration } = req.body
+  const { score, duration, level } = req.body
 
-  // Validation des champs
   if (score === undefined || duration === undefined) {
     return res.status(400).json({ error: 'score et duration sont requis' })
-  }
-  if (typeof score !== 'number' || typeof duration !== 'number') {
-    return res.status(400).json({ error: 'score et duration doivent être des nombres' })
   }
   if (score < 0 || duration <= 0) {
     return res.status(400).json({ error: 'Valeurs invalides' })
   }
 
-  // Validation anti-triche : score cohérent avec la durée
   const maxTheorique = Math.ceil((duration / 1000) * MAX_SCORE_PER_SECOND)
   if (score > maxTheorique) {
     return res.status(400).json({ error: 'Score incohérent avec la durée de partie' })
   }
 
+  // Vérifie si c'est la première partie
+  const { count } = await supabase
+    .from('scores')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', req.user.id)
+
   const { data, error } = await supabase
     .from('scores')
     .insert({
-      value: score,
-      duration: Math.round(duration / 1000), // stocké en secondes
-      user_id: req.user.id,
+      value:    score,
+      duration: Math.round(duration / 1000),
+      user_id:  req.user.id,
     })
     .select()
     .single()
@@ -44,7 +46,16 @@ router.post('/', authMiddleware, async (req, res) => {
     return res.status(500).json({ error: 'Erreur lors de la sauvegarde du score' })
   }
 
-  res.status(201).json(data)
+  // Vérifie les badges
+  const newAchievements = await checkAchievements({
+    userId:      req.user.id,
+    score,
+    duration,
+    level:       level ?? 1,
+    isFirstGame: count === 0,
+  })
+
+  res.status(201).json({ ...data, newAchievements })
 })
 
  // Retourne les 10 meilleurs scores toutes sessions confondues

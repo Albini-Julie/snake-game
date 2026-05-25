@@ -1,3 +1,5 @@
+import { checkMultiplayerAchievements } from './routes/achievements.js'
+
 // Constantes
 const CELL  = 20
 const COLS  = 20
@@ -14,7 +16,7 @@ const DIRS = {
 const rooms = new Map()
 let waitingPlayer = null
 
-// Utilitaires 
+// Utilitaires
 function randomId() {
   return Math.random().toString(36).slice(2, 8).toUpperCase()
 }
@@ -45,8 +47,8 @@ function createRoom(p1, p2) {
   const snake2 = createSnake(15, 10, 'LEFT')
   return {
     players: [
-      { id: p1.id, username: p1.username, snake: snake1, dir: 'RIGHT', nextDir: 'RIGHT', score: 0, alive: true },
-      { id: p2.id, username: p2.username, snake: snake2, dir: 'LEFT',  nextDir: 'LEFT',  score: 0, alive: true },
+      { id: p1.id, userId: p1.userId, username: p1.username, snake: snake1, dir: 'RIGHT', nextDir: 'RIGHT', score: 0, alive: true },
+      { id: p2.id, userId: p2.userId, username: p2.username, snake: snake2, dir: 'LEFT',  nextDir: 'LEFT',  score: 0, alive: true },
     ],
     fruit:  placeFruit(snake1, snake2),
     loop:   null,
@@ -55,12 +57,13 @@ function createRoom(p1, p2) {
 }
 
 // Logique de tick
-function tick(roomId, io) {
+async function tick(roomId, io) {
   const room = rooms.get(roomId)
   if (!room || room.status === 'finished') return
 
   const [p1, p2] = room.players
 
+  // Déplace chaque joueur vivant
   for (const player of room.players) {
     if (!player.alive) continue
 
@@ -95,7 +98,7 @@ function tick(roomId, io) {
     }
   }
 
-  // Vérifie fin de partie 
+  // Vérifie fin de partie
   const alivePlayers = room.players.filter(p => p.alive)
 
   if (alivePlayers.length <= 1) {
@@ -107,14 +110,20 @@ function tick(roomId, io) {
     if (alivePlayers.length === 1) {
       const survivor = alivePlayers[0]
       const other    = room.players.find(p => p.id !== survivor.id)
-      // Égalité de score → pas de gagnant
       if (survivor.score === other.score) {
         winner = null
       } else {
         winner = survivor.score > other.score ? survivor : other
       }
     }
-    // Si 0 survivants → égalité, winner reste null
+
+    // Débloque les achievements multijoueur
+    await Promise.all(room.players.map(player =>
+      checkMultiplayerAchievements({
+        userId:   player.userId,
+        isWinner: player.id === winner?.id
+      })
+    ))
 
     io.to(roomId).emit('game:over', {
       winner:  winner?.id ?? null,
@@ -124,7 +133,7 @@ function tick(roomId, io) {
     return
   }
 
-  // Envoie l'état mis à jour 
+  // Envoie l'état mis à jour
   io.to(roomId).emit('game:state', {
     players: room.players.map(p => ({
       id:    p.id,
@@ -141,14 +150,15 @@ export function setupMultiplayer(io) {
   io.on('connection', socket => {
     console.log(`Socket connecté : ${socket.id}`)
 
-    socket.on('matchmaking:join', ({ username }) => {
+    socket.on('matchmaking:join', ({ username, userId }) => {
       socket.data.username = username
+      socket.data.userId   = userId
 
       if (waitingPlayer && waitingPlayer.id !== socket.id) {
         const roomId = randomId()
         const room   = createRoom(
-          { id: waitingPlayer.id, username: waitingPlayer.data.username },
-          { id: socket.id,        username }
+          { id: waitingPlayer.id, userId: waitingPlayer.data.userId, username: waitingPlayer.data.username },
+          { id: socket.id,        userId: socket.data.userId,        username: socket.data.username }
         )
         rooms.set(roomId, room)
 
@@ -160,8 +170,8 @@ export function setupMultiplayer(io) {
         io.to(roomId).emit('matchmaking:found', {
           roomId,
           players: [
-            { id: waitingPlayer.id, username: waitingPlayer.data.username, playerIndex: 0 },
-            { id: socket.id,        username,                               playerIndex: 1 },
+            { id: waitingPlayer.id, userId: waitingPlayer.data.userId, username: waitingPlayer.data.username, playerIndex: 0 },
+            { id: socket.id,        userId: socket.data.userId,        username: socket.data.username,                               playerIndex: 1 },
           ]
         })
 
@@ -177,15 +187,16 @@ export function setupMultiplayer(io) {
       }
     })
 
-    socket.on('room:create', ({ username }) => {
+    socket.on('room:create', ({ username, userId }) => {
       const roomId = randomId()
       socket.data.username = username
+      socket.data.userId   = userId
       socket.data.roomId   = roomId
       socket.data.isHost   = true
       socket.join(roomId)
 
       rooms.set(roomId, {
-        players: [{ id: socket.id, username, snake: [], dir: 'RIGHT', nextDir: 'RIGHT', score: 0, alive: true }],
+        players: [{ id: socket.id, userId: socket.data.userId, username, snake: [], dir: 'RIGHT', nextDir: 'RIGHT', score: 0, alive: true }],
         fruit:   null,
         loop:    null,
         status:  'waiting',
@@ -195,14 +206,15 @@ export function setupMultiplayer(io) {
       socket.emit('room:created', { roomId })
     })
 
-    socket.on('room:join', ({ username, roomId }) => {
+    socket.on('room:join', ({ username, userId, roomId }) => {
       const room = rooms.get(roomId)
 
-      if (!room)                       return socket.emit('room:error', { message: 'Room introuvable' })
-      if (room.status !== 'waiting')   return socket.emit('room:error', { message: 'La partie a déjà commencé' })
-      if (room.players.length >= 2)    return socket.emit('room:error', { message: 'Room pleine' })
+      if (!room)                     return socket.emit('room:error', { message: 'Room introuvable' })
+      if (room.status !== 'waiting') return socket.emit('room:error', { message: 'La partie a déjà commencé' })
+      if (room.players.length >= 2)  return socket.emit('room:error', { message: 'Room pleine' })
 
       socket.data.username = username
+      socket.data.userId   = userId
       socket.data.roomId   = roomId
       socket.join(roomId)
 
@@ -210,15 +222,15 @@ export function setupMultiplayer(io) {
       const snake2 = createSnake(15, 10, 'LEFT')
 
       room.players[0].snake = snake1
-      room.players.push({ id: socket.id, username, snake: snake2, dir: 'LEFT', nextDir: 'LEFT', score: 0, alive: true })
+      room.players.push({ id: socket.id, userId: socket.data.userId, username, snake: snake2, dir: 'LEFT', nextDir: 'LEFT', score: 0, alive: true })
       room.fruit  = placeFruit(snake1, snake2)
       room.status = 'playing'
 
       io.to(roomId).emit('matchmaking:found', {
         roomId,
         players: [
-          { id: room.players[0].id, username: room.players[0].username, playerIndex: 0 },
-          { id: socket.id,          username,                            playerIndex: 1 },
+          { id: room.players[0].id, userId: room.players[0].userId, username: room.players[0].username, playerIndex: 0 },
+          { id: socket.id,          userId: socket.data.userId,        username: socket.data.username,                               playerIndex: 1 },
         ]
       })
 

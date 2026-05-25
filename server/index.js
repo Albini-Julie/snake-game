@@ -10,6 +10,7 @@ import usersRouter   from './routes/users.js'
 import avatarsRouter from './routes/avatars.js'
 import aiRouter from './routes/ai.js'
 import aiDemoRouter from './routes/aiDemo.js'
+import achievementsRouter from './routes/achievements.js'
 
 const app  = express()
 const server = createServer(app)  
@@ -30,6 +31,7 @@ app.use('/users',   usersRouter)
 app.use('/avatars', avatarsRouter)
 app.use('/ai', aiRouter)  
 app.use('/ai', aiDemoRouter)
+app.use('/achievements', achievementsRouter)
 
 // Health check
 app.get('/health', (_, res) => res.json({ status: 'ok' }))

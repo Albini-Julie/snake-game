@@ -2,12 +2,9 @@
   <div class="min-h-screen px-4 py-10 max-w-xl mx-auto">
     <!-- Titre -->
     <div class="text-center mb-8">
-      <p class="font-game text-slate-600 mb-2 text-pixel-sm">
-        <span aria-hidden="true">—</span> POULPENTIN
-        <span aria-hidden="true">—</span>
-      </p>
+      <p class="font-game text-slate-600 mb-2 text-pixel-sm">— POULPENTIN —</p>
       <h1
-        class="text-shadow-accent-glow font-game text-game-accent text-pixel-xl"
+        class="font-game text-game-accent text-pixel-xl text-shadow-accent-glow"
       >
         PROFILE
       </h1>
@@ -38,14 +35,14 @@
               {{ auth.profile?.email }}
             </p>
             <p class="font-game text-slate-600 text-pixel-sm">
-              Registered at {{ formatDate(auth.profile?.registration_date) }}
+              REGISTERED {{ formatDate(auth.profile?.registration_date) }}
             </p>
           </div>
         </div>
 
         <div class="mt-4 flex justify-end">
           <AppButton variant="secondary" @click="router.push('/avatar')">
-            Change your avatar
+            CHANGE AVATAR
           </AppButton>
         </div>
       </AppCard>
@@ -53,9 +50,7 @@
       <!-- Stats -->
       <div class="shadow-pixel-card bg-game-surface/60">
         <div class="px-4 py-2 border-b-2 border-game-accent/40 bg-game-bg/60">
-          <p class="font-game text-game-accent text-pixel-sm uppercase">
-            STATISTICS
-          </p>
+          <p class="font-game text-game-accent text-pixel-sm">STATISTICS</p>
         </div>
 
         <div class="grid grid-cols-2 gap-px bg-game-border/20">
@@ -65,21 +60,18 @@
             </p>
             <p class="font-game text-white text-2xl">{{ stats.played }}</p>
           </div>
-
           <div class="bg-game-surface/80 p-4 flex flex-col items-center gap-2">
             <p class="font-game text-slate-500 uppercase text-pixel-sm">
               Best score
             </p>
             <p class="font-game text-game-accent text-2xl">{{ stats.best }}</p>
           </div>
-
           <div class="bg-game-surface/80 p-4 flex flex-col items-center gap-2">
             <p class="font-game text-slate-500 uppercase text-pixel-sm">
               Average score
             </p>
             <p class="font-game text-green-400 text-2xl">{{ stats.average }}</p>
           </div>
-
           <div class="bg-game-surface/80 p-4 flex flex-col items-center gap-2">
             <p class="font-game text-slate-500 uppercase text-pixel-sm">
               Total time
@@ -122,17 +114,52 @@
           </span>
         </div>
       </div>
+
+      <!-- Achievements -->
+      <div class="shadow-pixel-card bg-game-surface/60">
+        <div
+          class="px-4 py-2 border-b-2 border-game-accent/40 bg-game-bg/60 flex items-center justify-between"
+        >
+          <p class="font-game text-game-accent text-pixel-sm">ACHIEVEMENTS</p>
+          <p class="font-game text-slate-500 text-pixel-sm">
+            {{ myAchievementsData.length }} / {{ allAchievements.length }}
+          </p>
+        </div>
+
+        <div v-if="allAchievements.length === 0" class="text-center py-6">
+          <p class="font-game text-slate-600 text-pixel-sm">
+            NO ACHIEVEMENTS YET
+          </p>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4">
+          <AchievementBadge
+            v-for="achievement in allAchievements"
+            :key="achievement.id"
+            :name="achievement.name"
+            :description="achievement.description"
+            :color="achievement.color"
+            :unlocked="unlockedSlugs.includes(achievement.slug)"
+            :unlocked-at="
+              myAchievementsData.find(
+                (a) => a.achievements?.slug === achievement.slug,
+              )?.unlocked_at
+            "
+          />
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import api from "@/lib/api";
 import AppCard from "@/components/ui/AppCard.vue";
 import AppButton from "@/components/ui/AppButton.vue";
+import AchievementBadge from "@/components/ui/AchievementBadge.vue";
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -140,15 +167,25 @@ const loading = ref(true);
 
 const stats = ref({ played: 0, best: 0, average: 0, totalDuration: 0 });
 const history = ref([]);
+const allAchievements = ref([]);
+const myAchievementsData = ref([]);
+
+const unlockedSlugs = computed(() =>
+  myAchievementsData.value.map((a) => a.achievements?.slug).filter(Boolean),
+);
 
 onMounted(async () => {
   try {
-    const [statsRes, historyRes] = await Promise.all([
+    const [statsRes, historyRes, allRes, myRes] = await Promise.all([
       api.get("/scores/stats"),
       api.get("/scores/me"),
+      api.get("/achievements"),
+      api.get("/achievements/me"),
     ]);
     stats.value = statsRes.data;
     history.value = historyRes.data;
+    allAchievements.value = allRes.data;
+    myAchievementsData.value = myRes.data;
   } catch {
     // silencieux
   } finally {

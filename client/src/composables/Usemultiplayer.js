@@ -57,24 +57,85 @@ export function useMultiplayer(canvasRef) {
     // Snakes
     gameState.players.forEach((player, i) => {
       if (!player.snake || player.snake.length === 0) return
-      const colors = PLAYER_COLORS[i]
+      
       player.snake.forEach((seg, j) => {
         const isHead = j === player.snake.length - 1
-        ctx.fillStyle = isHead ? colors.head : colors.body
-        if (!player.alive) ctx.globalAlpha = 0.3
-        ctx.fillRect(seg.x * CELL + 1, seg.y * CELL + 1, CELL - 2, CELL - 2)
-        ctx.globalAlpha = 1
-        if (isHead) {
-          // Yeux
-          ctx.fillStyle = 'white'
-          ctx.fillRect(seg.x * CELL + 4, seg.y * CELL + 4, 4, 4)
-          ctx.fillRect(seg.x * CELL + 12, seg.y * CELL + 4, 4, 4)
-          ctx.fillStyle = '#1e1b4b'
-          ctx.fillRect(seg.x * CELL + 5, seg.y * CELL + 5, 2, 2)
-          ctx.fillRect(seg.x * CELL + 13, seg.y * CELL + 5, 2, 2)
+        const cx     = seg.x * CELL + CELL / 2
+        const cy     = seg.y * CELL + CELL / 2
+
+        let angle = 0
+        if (j < player.snake.length - 1) {
+          const next = player.snake[j + 1]
+          angle = Math.atan2(next.y - seg.y, next.x - seg.x) - Math.PI / 2
+        } else if (j > 0) {
+          // Pour la tête, on regarde par rapport au segment précédent
+          const prev = player.snake[j - 1]
+          angle = Math.atan2(seg.y - prev.y, seg.x - prev.x) - Math.PI / 2
         }
+
+        if (!player.alive) ctx.globalAlpha = 0.3
+        const lightness = isHead ? 65 : 40 + (j / player.snake.length) * 15
+        const hue = i === 0 ? 210 : 0
+        const color = `hsl(${hue}, 80%, ${lightness}%)`
+        drawPoulpe(cx, cy, CELL, angle, color, isHead)
+        ctx.globalAlpha = 1
       })
     })
+  }
+
+  function drawPoulpe(cx, cy, size, angle, color, isHead) {
+    ctx.save()
+    ctx.translate(cx, cy)
+    ctx.rotate(angle)
+
+    const r       = size * 0.38
+    const tentLen = size * 0.45
+    const tentR   = size * 0.09
+    const nTent   = 4
+
+    ctx.beginPath()
+    ctx.arc(0, 0, r, Math.PI, 0)
+    ctx.fillStyle = color
+    ctx.fill()
+    ctx.strokeStyle = 'rgba(0,0,0,0.4)'
+    ctx.lineWidth = 1
+    ctx.stroke()
+
+    ctx.fillStyle = color
+    ctx.fillRect(-r, 0, r * 2, tentR * 2)
+
+    const totalWidth = nTent * tentR * 2
+    const startX     = -totalWidth / 2 + tentR
+    for (let i = 0; i < nTent; i++) {
+      const tx = startX + i * tentR * 2
+      ctx.beginPath()
+      ctx.arc(tx, tentR * 2, tentR, Math.PI, 0)
+      ctx.arc(tx, tentR * 2 + tentLen, tentR, 0, Math.PI)
+      ctx.closePath()
+      ctx.fillStyle = color
+      ctx.fill()
+      ctx.strokeStyle = 'rgba(0,0,0,0.3)'
+      ctx.lineWidth = 0.8
+      ctx.stroke()
+    }
+
+    if (isHead) {
+      const eyeOffset = r * 0.38
+      const eyeR      = r * 0.18
+      const pupilR    = eyeR * 0.55
+      ;[-1, 1].forEach(side => {
+        ctx.beginPath()
+        ctx.arc(side * eyeOffset, -r * 0.3, eyeR, 0, Math.PI * 2)
+        ctx.fillStyle = 'white'
+        ctx.fill()
+        ctx.beginPath()
+        ctx.arc(side * eyeOffset + side * pupilR * 0.3, -r * 0.3, pupilR, 0, Math.PI * 2)
+        ctx.fillStyle = '#1e1b4b'
+        ctx.fill()
+      })
+    }
+
+    ctx.restore()
   }
 
   function drawFruit(f) {

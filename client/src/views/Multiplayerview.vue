@@ -1,6 +1,6 @@
 <template>
   <div
-    class="min-h-screen flex flex-col items-center justify-center gap-6 px-4 py-8"
+    class="min-h-screen flex flex-col items-center justify-start md:justify-center gap-6 px-4 py-8 mt-3 md:mt-0"
   >
     <!-- ── LOBBY ── -->
     <div

@@ -1,6 +1,6 @@
 <template>
   <div
-    class="min-h-screen flex flex-col items-center justify-center gap-8 px-4"
+    class="min-h-screen flex flex-col items-center justify-start md:justify-center gap-8 px-4 mt-10 md:mt-0"
   >
     <!-- Titre -->
     <div class="text-center">

@@ -4,7 +4,19 @@ import { useAuthStore } from '@/stores/auth'
 const routes = [
   {
     path: '/',
-    redirect: '/game'
+    redirect: '/lobby'
+  },
+  {
+    path: '/lobby',
+    name: 'lobby',
+    component: () => import('@/views/LobbyView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/game',
+    name: 'game',
+    component: () => import('@/views/GameView.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/login',
@@ -19,12 +31,6 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/game',
-    name: 'game',
-    component: () => import('@/views/GameView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
     path: '/leaderboard',
     name: 'leaderboard',
     component: () => import('@/views/LeaderboardView.vue'),
@@ -36,6 +42,12 @@ const routes = [
     component: () => import('@/views/ProfileView.vue'),
     meta: { requiresAuth: true }
   },
+  {
+    path: '/multiplayer',
+    name: 'multiplayer',
+    component: () => import('@/views/MultiplayerView.vue'),
+    meta: { requiresAuth: true }
+  }
 ]
 
 const router = createRouter({

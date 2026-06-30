@@ -1,25 +1,26 @@
 import rateLimit from 'express-rate-limit'
 
+const windowMs = Number(process.env.AI_RATE_LIMIT_WINDOW_MS ?? 60 * 1000)
+const max      = Number(process.env.AI_RATE_LIMIT_MAX ?? 10)
+const demoMax  = Number(process.env.AI_DEMO_RATE_LIMIT_MAX ?? 60)
+
 /**
  * Limite les appels aux routes IA pour protéger le quota Mistral.
- * 10 requêtes par minute par IP - largement suffisant pour un usage normal,
- * mais bloque le spam ou les boucles infinies côté client.
  */
 const aiRateLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 10,
-  standardHeaders: true, // retourne les infos de quota dans les headers RateLimit-*
+  windowMs,
+  max,
+  standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Trop de requêtes IA. Réessaie dans une minute.' },
 })
 
 /**
- * Limite spécifique pour le mode démo IA, plus permissive
- * car appelée automatiquement toutes les ~750ms pendant la démo.
+ * Limite spécifique pour le mode démo IA, plus permissive.
  */
 const aiDemoRateLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 60, // ~1 requête/seconde
+  windowMs,
+  max: demoMax,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Trop de requêtes en mode démo. Réessaie dans une minute.' },

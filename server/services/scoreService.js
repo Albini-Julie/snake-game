@@ -1,18 +1,12 @@
 import supabase from '../config/supabase.js'
 
-const MAX_SCORE_PER_SECOND = 2
+const MAX_SCORE_PER_SECOND = Number(process.env.MAX_SCORE_PER_SECOND ?? 2)
 
-/**
- * Vérifie qu'un score est cohérent avec la durée de la partie (anti-triche)
- */
 export function isScoreCoherent(score, durationMs) {
   const maxTheorique = Math.ceil((durationMs / 1000) * MAX_SCORE_PER_SECOND)
   return score <= maxTheorique
 }
 
-/**
- * Vérifie si c'est la première partie d'un joueur
- */
 export async function isFirstGame(userId) {
   const { count } = await supabase
     .from('scores')
@@ -22,9 +16,6 @@ export async function isFirstGame(userId) {
   return count === 0
 }
 
-/**
- * Enregistre un score en base
- */
 export async function createScore({ userId, value, durationMs }) {
   const { data, error } = await supabase
     .from('scores')
@@ -40,9 +31,6 @@ export async function createScore({ userId, value, durationMs }) {
   return data
 }
 
-/**
- * Retourne le top 10 du leaderboard
- */
 export async function getLeaderboard() {
   const { data, error } = await supabase
     .from('scores')
@@ -57,9 +45,6 @@ export async function getLeaderboard() {
   return data
 }
 
-/**
- * Retourne l'historique des scores d'un joueur (10 plus récents par valeur)
- */
 export async function getUserScores(userId) {
   const { data, error } = await supabase
     .from('scores')
@@ -72,9 +57,6 @@ export async function getUserScores(userId) {
   return data
 }
 
-/**
- * Calcule les statistiques agrégées d'un joueur
- */
 export async function getUserStats(userId) {
   const { data, error } = await supabase
     .from('scores')

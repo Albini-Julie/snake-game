@@ -1,8 +1,8 @@
-// Constantes du jeu 
+// ── Constantes du jeu ────────────────────────────────────────────────────────
 export const CELL  = 20
 export const COLS  = 20
 export const ROWS  = 20
-export const SPEED = 150 // ms par tick
+export const SPEED = Number(process.env.GAME_SPEED_MS ?? 150) // ms par tick
 
 export const DIRS = {
   UP:    { x: 0,  y: -1 },
@@ -13,16 +13,10 @@ export const DIRS = {
 
 const OPPOSITE = { UP: 'DOWN', DOWN: 'UP', LEFT: 'RIGHT', RIGHT: 'LEFT' }
 
-/**
- * Génère un identifiant de room lisible
- */
 export function randomRoomId() {
   return Math.random().toString(36).slice(2, 8).toUpperCase()
 }
 
-/**
- * Place un fruit sur une case libre (hors des deux snakes)
- */
 export function placeFruit(snake1, snake2) {
   const occupied = new Set([
     ...snake1.map(s => `${s.x},${s.y}`),
@@ -36,9 +30,6 @@ export function placeFruit(snake1, snake2) {
   return { x: fx, y: fy }
 }
 
-/**
- * Crée un snake de 3 segments à une position donnée, orienté dans une direction
- */
 export function createSnake(startX, startY, dir) {
   return [
     { x: startX - 2 * DIRS[dir].x, y: startY - 2 * DIRS[dir].y },
@@ -47,9 +38,6 @@ export function createSnake(startX, startY, dir) {
   ]
 }
 
-/**
- * Crée l'état initial d'une partie à deux joueurs
- */
 export function createGameState(p1, p2) {
   const snake1 = createSnake(4,  10, 'RIGHT')
   const snake2 = createSnake(15, 10, 'LEFT')
@@ -64,9 +52,6 @@ export function createGameState(p1, p2) {
   }
 }
 
-/**
- * Met à jour la direction demandée d'un joueur, en interdisant le demi-tour
- */
 export function setPlayerDirection(player, direction) {
   if (!player.alive) return
   if (direction !== OPPOSITE[player.dir]) {
@@ -74,10 +59,6 @@ export function setPlayerDirection(player, direction) {
   }
 }
 
-/**
- * Avance tous les joueurs vivants d'un tick et résout les collisions.
- * Mute directement l'objet `state` passé en paramètre.
- */
 export function stepGame(state) {
   const [p1, p2] = state.players
 
@@ -91,17 +72,14 @@ export function stepGame(state) {
       y: head.y + DIRS[player.dir].y,
     }
 
-    // Collision mur
     if (newHead.x < 0 || newHead.x >= COLS || newHead.y < 0 || newHead.y >= ROWS) {
       player.alive = false
       continue
     }
-    // Collision avec son propre corps
     if (player.snake.some(s => s.x === newHead.x && s.y === newHead.y)) {
       player.alive = false
       continue
     }
-    // Collision avec le corps adverse
     const other = state.players.find(p => p.id !== player.id)
     if (other.snake.some(s => s.x === newHead.x && s.y === newHead.y)) {
       player.alive = false
@@ -110,7 +88,6 @@ export function stepGame(state) {
 
     player.snake.push(newHead)
 
-    // Fruit mangé
     if (newHead.x === state.fruit.x && newHead.y === state.fruit.y) {
       player.score++
       state.fruit = placeFruit(p1.snake, p2.snake)
@@ -122,9 +99,6 @@ export function stepGame(state) {
   return state
 }
 
-/**
- * Détermine si la partie est terminée et qui en est le gagnant (ou null si égalité)
- */
 export function checkGameOver(state) {
   const alivePlayers = state.players.filter(p => p.alive)
 
@@ -141,14 +115,10 @@ export function checkGameOver(state) {
       winner = survivor.score > other.score ? survivor : other
     }
   }
-  // 0 survivant → égalité, winner reste null
 
   return { finished: true, winner }
 }
 
-/**
- * Sérialise l'état du jeu pour l'envoyer au client (retire les champs internes)
- */
 export function serializeState(state) {
   return {
     players: state.players.map(p => ({

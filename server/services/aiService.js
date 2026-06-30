@@ -1,8 +1,8 @@
-const MISTRAL_URL = 'https://api.mistral.ai/v1/chat/completions'
+const MISTRAL_URL = process.env.MISTRAL_URL ?? 'https://api.mistral.ai/v1/chat/completions'
+const CACHE_TTL    = Number(process.env.AI_USERNAMES_CACHE_TTL_MS ?? 5 * 60 * 1000)
 
 // ── Cache pseudos ────────────────────────────────────────────────────────────
 let usernamesCache = { data: null, timestamp: 0 }
-const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
 /**
  * Appel générique à l'API Mistral
@@ -28,9 +28,6 @@ async function callMistral(prompt, maxTokens = 300) {
   return data.choices?.[0]?.message?.content?.trim() ?? ''
 }
 
-/**
- * Nettoie le markdown éventuel renvoyé par le modèle
- */
 function stripMarkdown(text) {
   return text
     .replace(/\*\*/g, '')
@@ -41,7 +38,7 @@ function stripMarkdown(text) {
 }
 
 /**
- * Génère 3 pseudos marins, avec cache de 5 minutes
+ * Génère 3 pseudos marins, avec cache configurable
  */
 export async function generateUsernames({ forceRefresh = false } = {}) {
   if (!forceRefresh && usernamesCache.data && Date.now() - usernamesCache.timestamp < CACHE_TTL) {
@@ -55,16 +52,12 @@ Format exact : Pseudo1,Pseudo2,Pseudo3`
   )
 
   const usernames = text.split(',').map(u => u.trim()).filter(Boolean).slice(0, 3)
-
   if (usernames.length === 0) throw new Error('Impossible de générer des pseudos')
 
   usernamesCache = { data: usernames, timestamp: Date.now() }
   return usernames
 }
 
-/**
- * Retourne le cache de pseudos même expiré (fallback en cas d'erreur Mistral)
- */
 export function getCachedUsernames() {
   return usernamesCache.data
 }
@@ -104,9 +97,6 @@ Règles strictes :
 const OPPOSITE = { UP: 'DOWN', DOWN: 'UP', LEFT: 'RIGHT', RIGHT: 'LEFT' }
 const ALL_DIRS = ['UP', 'DOWN', 'LEFT', 'RIGHT']
 
-/**
- * Calcule les directions sûres (hors mur, hors corps) depuis la tête du snake
- */
 export function getSafeDirections({ head, snake, cols, rows, direction }) {
   const possible = ALL_DIRS.filter(d => d !== OPPOSITE[direction])
   const snakeSet = new Set(snake.map(s => `${s.x},${s.y}`))
@@ -126,9 +116,6 @@ export function getSafeDirections({ head, snake, cols, rows, direction }) {
   return { safe, moves }
 }
 
-/**
- * Direction de secours : la plus proche du fruit parmi les directions sûres
- */
 export function getFallbackDirection({ safe, moves, fruit }) {
   return safe.reduce((best, d) => {
     const m    = moves[d]
@@ -137,13 +124,9 @@ export function getFallbackDirection({ safe, moves, fruit }) {
   }, { dir: safe[0], dist: Infinity }).dir
 }
 
-/**
- * Demande à Mistral la meilleure direction parmi les directions sûres
- */
 export async function chooseDemoDirection({ head, fruit, snake, cols, rows, direction }) {
   const { safe, moves } = getSafeDirections({ head, snake, cols, rows, direction })
 
-  // Cas triviaux — pas besoin d'appeler l'IA
   if (safe.length === 1) return safe[0]
   if (safe.length === 0) return direction
 

@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import authMiddleware from '../middleware/auth.js'
-import { checkAchievements } from './achievements.js'
+import { checkAchievements } from '../services/achievementService.js'
 import {
   isScoreCoherent,
   isFirstGame,

@@ -1,33 +1,24 @@
 import { Router } from 'express'
 import authMiddleware from '../middleware/auth.js'
+import { asyncHandler } from '../middleware/errorHandler.js'
 import { getAllAchievements, getUserAchievements } from '../services/achievementService.js'
 
 const router = Router()
 
 /**
  * GET /achievements
- * Tous les badges disponibles
  */
-router.get('/', async (req, res) => {
-  try {
-    const data = await getAllAchievements()
-    res.json(data)
-  } catch (err) {
-    res.status(500).json({ error: err.message })
-  }
-})
+router.get('/', asyncHandler(async (req, res) => {
+  const data = await getAllAchievements()
+  res.json(data)
+}))
 
 /**
  * GET /achievements/me
- * Badges débloqués par le joueur connecté
  */
-router.get('/me', authMiddleware, async (req, res) => {
-  try {
-    const data = await getUserAchievements(req.user.id)
-    res.json(data)
-  } catch (err) {
-    res.status(500).json({ error: err.message })
-  }
-})
+router.get('/me', authMiddleware, asyncHandler(async (req, res) => {
+  const data = await getUserAchievements(req.user.id)
+  res.json(data)
+}))
 
 export default router

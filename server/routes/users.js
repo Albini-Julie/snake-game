@@ -1,52 +1,36 @@
 import { Router } from 'express'
 import authMiddleware from '../middleware/auth.js'
+import { asyncHandler, httpError } from '../middleware/errorHandler.js'
+import { updateAvatarSchema, validateBody } from '../schemas/index.js'
 import { getUserProfile, avatarExists, updateUserAvatar } from '../services/userService.js'
-import { isValidUUID } from '../utils/validators.js'
 
 const router = Router()
 
 /**
  * GET /users/me
- * Profil de l'utilisateur connecté
  */
-router.get('/me', authMiddleware, async (req, res) => {
-  try {
-    const profile = await getUserProfile(req.user.id)
-    res.json(profile)
-  } catch (err) {
-    res.status(500).json({ error: err.message })
-  }
-})
+router.get('/me', authMiddleware, asyncHandler(async (req, res) => {
+  const profile = await getUserProfile(req.user.id)
+  res.json(profile)
+}))
 
 /**
  * PUT /users/avatar
- * Met à jour l'avatar de l'utilisateur connecté
  */
-router.put('/avatar', authMiddleware, async (req, res) => {
+router.put('/avatar', authMiddleware, validateBody(updateAvatarSchema), asyncHandler(async (req, res) => {
   const { avatar_id } = req.body
-
-  if (!avatar_id) {
-    return res.status(400).json({ error: 'avatar_id est requis' })
-  }
-  if (!isValidUUID(avatar_id)) {
-    return res.status(400).json({ error: 'avatar_id doit être un UUID valide' })
-  }
 
   const exists = await avatarExists(avatar_id)
   if (!exists) {
-    return res.status(404).json({ error: 'Avatar introuvable' })
+    throw httpError(404, 'Avatar introuvable')
   }
 
-  try {
-    const data = await updateUserAvatar({
-      userId:   req.user.id,
-      avatarId: avatar_id,
-      email:    req.user.email,
-    })
-    res.json(data)
-  } catch (err) {
-    res.status(500).json({ error: err.message })
-  }
-})
+  const data = await updateUserAvatar({
+    userId:   req.user.id,
+    avatarId: avatar_id,
+    email:    req.user.email,
+  })
+  res.json(data)
+}))
 
 export default router

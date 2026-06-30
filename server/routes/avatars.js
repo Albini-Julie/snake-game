@@ -1,19 +1,15 @@
 import { Router } from 'express'
+import { asyncHandler } from '../middleware/errorHandler.js'
 import { getAllAvatars } from '../services/avatarService.js'
 
 const router = Router()
 
 /**
  * GET /avatars
- * Tous les avatars disponibles (route publique)
  */
-router.get('/', async (req, res) => {
-  try {
-    const data = await getAllAvatars()
-    res.json(data)
-  } catch (err) {
-    res.status(500).json({ error: err.message })
-  }
-})
+router.get('/', asyncHandler(async (req, res) => {
+  const data = await getAllAvatars()
+  res.json(data)
+}))
 
 export default router

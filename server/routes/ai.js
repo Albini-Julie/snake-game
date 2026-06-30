@@ -1,7 +1,9 @@
 import { Router } from 'express'
 import { generateUsernames, getCachedUsernames, generateAdvice } from '../services/aiService.js'
+import { aiRateLimiter } from '../middleware/rateLimiter.js'
 
 const router = Router()
+router.use(aiRateLimiter)
 
 /**
  * GET /ai/usernames

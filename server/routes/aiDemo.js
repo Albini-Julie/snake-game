@@ -1,7 +1,10 @@
 import { Router } from 'express'
 import { chooseDemoDirection } from '../services/aiService.js'
+import { aiDemoRateLimiter } from '../middleware/rateLimiter.js'
 
 const router = Router()
+
+router.use(aiDemoRateLimiter)
 
 /**
  * POST /ai/demo-move

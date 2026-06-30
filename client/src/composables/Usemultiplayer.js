@@ -228,7 +228,7 @@ export function useMultiplayer(canvasRef) {
 
   // Connexion Socket
   function connect() {
-    socket = io('http://localhost:3000')
+    socket = io(import.meta.env.VITE_SOCKET_URL ?? 'http://localhost:3000')
 
     socket.on('matchmaking:waiting', () => {
       state.value = 'waiting'

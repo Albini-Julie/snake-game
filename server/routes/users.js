@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import authMiddleware from '../middleware/auth.js'
 import { getUserProfile, avatarExists, updateUserAvatar } from '../services/userService.js'
+import { isValidUUID } from '../utils/validators.js'
 
 const router = Router()
 
@@ -26,6 +27,9 @@ router.put('/avatar', authMiddleware, async (req, res) => {
 
   if (!avatar_id) {
     return res.status(400).json({ error: 'avatar_id est requis' })
+  }
+  if (!isValidUUID(avatar_id)) {
+    return res.status(400).json({ error: 'avatar_id doit être un UUID valide' })
   }
 
   const exists = await avatarExists(avatar_id)

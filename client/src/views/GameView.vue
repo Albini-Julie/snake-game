@@ -65,7 +65,8 @@ import { ref, watch, computed, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import { useGame } from "@/composables/useGame";
-import api from "@/lib/api";
+import { saveScore } from "@/api/scores";
+import { getGameAdvice } from "@/api/ai";
 import AppButton from "@/components/ui/AppButton.vue";
 import GameHud from "@/components/game/GameHud.vue";
 import GameOverlay from "@/components/game/GameOverlay.vue";
@@ -132,11 +133,11 @@ watch(game.state, async (val) => {
   saveError.value = "";
 
   const [scoreResult, adviceResult] = await Promise.allSettled([
-    api.post("/scores", {
+    saveScore({
       score: game.score.value,
       duration: game.getDuration(),
     }),
-    api.post("/ai/advice", {
+    getGameAdvice({
       score: game.score.value,
       duration: game.getDuration(),
       level: game.level.value,

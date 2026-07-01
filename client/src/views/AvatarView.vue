@@ -80,7 +80,7 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
-import api from "@/lib/api";
+import { getAvatars } from "@/api/avatars";
 import AppButton from "@/components/ui/AppButton.vue";
 import AvatarGrid from "@/components/avatar/AvatarGrid.vue";
 
@@ -98,7 +98,7 @@ const saveSuccess = ref(false);
 onMounted(async () => {
   if (avatars.value.length > 0) return;
   try {
-    const { data } = await api.get("/avatars");
+    const { data } = await getAvatars();
     avatars.value = data;
   } catch {
     error.value = "LOADING ERROR";

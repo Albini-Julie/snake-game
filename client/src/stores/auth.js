@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import supabase from '@/lib/supabase'
-import api from '@/lib/api'
+import { getMyProfile, updateAvatar as updateAvatarApi } from '@/api/users'
 
 export const useAuthStore = defineStore('auth', () => {
   const user    = ref(null)
@@ -17,39 +17,36 @@ export const useAuthStore = defineStore('auth', () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
 
-      const { data } = await api.get('/users/me')
+      const { data } = await getMyProfile()
       profile.value = data
-    } catch (e) {
+    } catch {
       profile.value = null
     }
   }
 
   // Initialise la session au démarrage de l'app
   async function init() {
-  loading.value = true
+    loading.value = true
 
-  const { data } = await supabase.auth.getSession()
-  user.value = data.session?.user ?? null
-  if (user.value) await fetchProfile()
-  loading.value = false
+    const { data } = await supabase.auth.getSession()
+    user.value = data.session?.user ?? null
+    if (user.value) await fetchProfile()
+    loading.value = false
 
-  supabase.auth.onAuthStateChange(async (event, session) => {
-
-    if (event === 'SIGNED_IN') {
-      user.value = session?.user ?? null
-      if (!profile.value) await fetchProfile()
-    }
-
-    if (event === 'SIGNED_OUT') {
-      user.value    = null
-      profile.value = null
-    }
-
-    if (event === 'TOKEN_REFRESHED') {
-      user.value = session?.user ?? null
-    }
-  })
-}
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN') {
+        user.value = session?.user ?? null
+        if (!profile.value) await fetchProfile()
+      }
+      if (event === 'SIGNED_OUT') {
+        user.value    = null
+        profile.value = null
+      }
+      if (event === 'TOKEN_REFRESHED') {
+        user.value = session?.user ?? null
+      }
+    })
+  }
 
   async function login(email, password) {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -75,7 +72,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function updateAvatar(avatarId) {
-    await api.put('/users/avatar', { avatar_id: avatarId })
+    await updateAvatarApi(avatarId)
     await fetchProfile()
   }
 

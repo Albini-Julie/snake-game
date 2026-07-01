@@ -106,7 +106,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
-import api from "@/lib/api";
+import { getLeaderboard, getMyScores } from "@/api/scores";
 import AppButton from "@/components/ui/AppButton.vue";
 import LeaderboardTop3 from "@/components/leaderboard/LeaderboardTop3.vue";
 import LeaderboardRow from "@/components/leaderboard/LeaderboardRow.vue";
@@ -129,10 +129,7 @@ async function load() {
   loading.value = true;
   error.value = "";
   try {
-    const [lbRes, myRes] = await Promise.all([
-      api.get("/scores/leaderboard"),
-      api.get("/scores/me"),
-    ]);
+    const [lbRes, myRes] = await Promise.all([getLeaderboard(), getMyScores()]);
     scores.value = lbRes.data;
     if (myRes.data.length > 0) {
       const best = myRes.data[0];

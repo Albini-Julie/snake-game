@@ -5,7 +5,7 @@
         >Usernames suggested by AI</span
       >
       <button
-        @click="generate"
+        @click="generate(true)"
         :disabled="loading"
         class="text-pixel-md text-game-accent hover:text-indigo-400 transition-colors disabled:opacity-50"
       >
@@ -30,7 +30,7 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import api from "@/lib/api";
+import { getUsernameSuggestions } from "@/api/ai";
 
 defineEmits(["select"]);
 
@@ -38,11 +38,11 @@ const usernames = ref([]);
 const loading = ref(false);
 const error = ref("");
 
-async function generate() {
+async function generate(refresh = false) {
   loading.value = true;
   error.value = "";
   try {
-    const { data } = await api.get("/ai/usernames?refresh=true");
+    const { data } = await getUsernameSuggestions({ refresh });
     usernames.value = data.usernames;
   } catch {
     error.value = "Impossible to generate usernames.";
@@ -51,5 +51,5 @@ async function generate() {
   }
 }
 
-onMounted(generate);
+onMounted(() => generate(true));
 </script>

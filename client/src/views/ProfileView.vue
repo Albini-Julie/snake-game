@@ -156,7 +156,8 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
-import api from "@/lib/api";
+import { getMyStats, getMyScores } from "@/api/scores";
+import { getAllAchievements, getMyAchievements } from "@/api/achievements";
 import AppCard from "@/components/ui/AppCard.vue";
 import AppButton from "@/components/ui/AppButton.vue";
 import AchievementBadge from "@/components/ui/AchievementBadge.vue";
@@ -177,10 +178,10 @@ const unlockedSlugs = computed(() =>
 onMounted(async () => {
   try {
     const [statsRes, historyRes, allRes, myRes] = await Promise.all([
-      api.get("/scores/stats"),
-      api.get("/scores/me"),
-      api.get("/achievements"),
-      api.get("/achievements/me"),
+      getMyStats(),
+      getMyScores(),
+      getAllAchievements(),
+      getMyAchievements(),
     ]);
     stats.value = statsRes.data;
     history.value = historyRes.data;

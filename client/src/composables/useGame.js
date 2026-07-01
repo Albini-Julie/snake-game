@@ -1,5 +1,5 @@
 import { ref, onUnmounted } from 'vue'
-import axios from 'axios'
+import { getDemoMove } from '@/api/ai'
 
 const CELL       = 20
 const SPEEDS = [200, 165, 130, 95, 65]
@@ -43,7 +43,7 @@ export function useGame(canvasRef, avatarColor = 240) {
   let stepCount = 0        // nb de cases parcourues depuis le dernier appel IA
   let pendingDir = null    // direction suggérée par l'IA en attente
 
-  // ── Dessin du poulpe ─────────────────────────────────────────────────────────
+  // Dessin du poulpe
   function drawPoulpe(cx, cy, size, angle, color, isHead) {
     ctx.save()
     ctx.translate(cx, cy)
@@ -99,7 +99,7 @@ export function useGame(canvasRef, avatarColor = 240) {
     ctx.restore()
   }
 
-  // ── Dessin du fruit (poisson) ─────────────────────────────────────────────────
+  // Dessin du fruit (poisson)
   function drawFruit(fx, fy) {
     const cx = fx * CELL + CELL / 2
     const cy = fy * CELL + CELL / 2
@@ -170,7 +170,7 @@ export function useGame(canvasRef, avatarColor = 240) {
     ctx.restore()
   }
 
-  // ── Rendu ─────────────────────────────────────────────────────────────────────
+  // Rendu
   function draw() {
     const canvas = canvasRef.value
     if (!canvas) return
@@ -225,14 +225,14 @@ export function useGame(canvasRef, avatarColor = 240) {
     })
   }
 
-  // ── IA démo : demande la prochaine direction à Mistral ───────────────────────
+  // IA démo : demande la prochaine direction à Mistral
   async function askAI() {
     const currentDirName = DIR_NAME[`${dir.x},${dir.y}`] ?? 'RIGHT'
     try {
-      const { data } = await axios.post('/api/ai/demo-move', {
+      const { data } = await getDemoMove({
         head:      snake[snake.length - 1],
         fruit,
-        snake:     snake.slice(-15), // on envoie max 15 segments pour limiter la taille
+        snake:     snake.slice(-15),
         cols,
         rows,
         direction: currentDirName
@@ -244,7 +244,7 @@ export function useGame(canvasRef, avatarColor = 240) {
     }
   }
 
-  // ── Logique de jeu ────────────────────────────────────────────────────────────
+  // Logique de jeu
   function placeFruit() {
     const occupied = new Set(snake.map(s => `${s.x},${s.y}`))
     let fx, fy
@@ -302,7 +302,7 @@ export function useGame(canvasRef, avatarColor = 240) {
     draw()
   }
 
-  // ── Particules de mort ────────────────────────────────────────────────────────
+  // Particules de mort
 let deathParticles = []
 
 function createDeathParticles() {

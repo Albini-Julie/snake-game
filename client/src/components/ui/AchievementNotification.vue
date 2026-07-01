@@ -29,6 +29,7 @@
 
 <script setup>
 import { ref, watch } from "vue";
+import { useSound } from "@/composables/useSound";
 
 const props = defineProps({
   slugs: {
@@ -41,6 +42,8 @@ const props = defineProps({
   },
 });
 
+const { playSuccess } = useSound();
+
 const visible = ref(false);
 const queue = ref([]);
 let timer = null;
@@ -50,7 +53,6 @@ watch(
   (newSlugs) => {
     if (!newSlugs || newSlugs.length === 0) return;
 
-    // Retrouve les noms des achievements depuis leurs slugs
     queue.value = newSlugs
       .map((slug) => props.allAchievements.find((a) => a.slug === slug))
       .filter(Boolean);
@@ -58,8 +60,8 @@ watch(
     if (queue.value.length === 0) return;
 
     visible.value = true;
+    playSuccess();
 
-    // Disparaît après 4 secondes
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => {
       visible.value = false;

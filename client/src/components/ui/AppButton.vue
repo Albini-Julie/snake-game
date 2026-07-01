@@ -39,6 +39,7 @@
 
 <script setup>
 import { ref } from "vue";
+import { useSound } from "@/composables/useSound";
 
 const props = defineProps({
   variant: {
@@ -50,6 +51,8 @@ const props = defineProps({
   disabled: { type: Boolean, default: false },
 });
 
+const { playClick, playClickSecondary } = useSound();
+
 const btnRef = ref(null);
 const particles = ref([]);
 let particleId = 0;
@@ -59,6 +62,13 @@ const COLORS_SECONDARY = ["#94a3b8", "#ffffff", "#cbd5e1", "#475569"];
 
 function handleClick(e) {
   if (props.disabled) return;
+
+  // Son selon le variant
+  if (props.variant === "primary") {
+    playClick();
+  } else {
+    playClickSecondary();
+  }
 
   const rect = btnRef.value.getBoundingClientRect();
   const x = e.clientX - rect.left;

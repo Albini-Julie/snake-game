@@ -136,6 +136,7 @@ watch(game.state, async (val) => {
     saveScore({
       score: game.score.value,
       duration: game.getDuration(),
+      level: game.level.value,
     }),
     getGameAdvice({
       score: game.score.value,

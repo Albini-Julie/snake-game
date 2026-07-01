@@ -73,7 +73,7 @@ import { useAuthStore } from "@/stores/auth";
 import { useGame } from "@/composables/useGame";
 import { saveScore } from "@/api/scores";
 import { getGameAdvice } from "@/api/ai";
-import { getAllAchievements } from "@/api/achievements";
+import { getAllAchievements, getMyAchievements } from "@/api/achievements";
 import AppButton from "@/components/ui/AppButton.vue";
 import GameHud from "@/components/game/GameHud.vue";
 import GameOverlay from "@/components/game/GameOverlay.vue";
@@ -112,8 +112,15 @@ onMounted(async () => {
   game.init(canvasRef.value);
   window.addEventListener("keydown", game.handleKey);
   try {
-    const { data } = await getAllAchievements();
-    allAchievements.value = data;
+    const [allRes, myRes] = await Promise.all([
+      getAllAchievements(),
+      getMyAchievements(),
+    ]);
+    allAchievements.value = allRes.data;
+    const alreadyUnlocked = myRes.data
+      .map((a) => a.achievements?.slug)
+      .filter(Boolean);
+    game.preloadUnlocked(alreadyUnlocked);
   } catch {
     /* silencieux */
   }

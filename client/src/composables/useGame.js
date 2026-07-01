@@ -1,7 +1,7 @@
 import { ref, onUnmounted } from 'vue'
 import { getDemoMove } from '@/api/ai'
 
-const CELL       = 20
+const CELL   = 20
 const SPEEDS = [200, 165, 130, 95, 65]
 const DIRECTIONS = {
   ArrowUp:    { x: 0,  y: -1 },
@@ -38,12 +38,12 @@ const ACHIEVEMENT_CONDITIONS = [
 ]
 
 export function useGame(canvasRef, avatarColor = 240) {
-  const score              = ref(0)
-  const bestScore          = ref(Number(localStorage.getItem('poulpentin_best') ?? 0))
-  const state              = ref('idle')
-  const level              = ref(1)
-  const isDemo             = ref(false)
-  const justUnlocked       = ref([]) // slugs débloqués en temps réel
+  const score        = ref(0)
+  const bestScore    = ref(Number(localStorage.getItem('poulpentin_best') ?? 0))
+  const state        = ref('idle')
+  const level        = ref(1)
+  const isDemo       = ref(false)
+  const justUnlocked = ref([]) // slugs débloqués en temps réel
 
   let snake      = []
   let fruit      = null
@@ -57,7 +57,7 @@ export function useGame(canvasRef, avatarColor = 240) {
   let stepCount  = 0
   let pendingDir = null
 
-  // Achievements déjà notifiés pendant cette partie (évite les doublons)
+  // Achievements déjà notifiés (persist entre les parties — NE PAS remettre à zéro)
   let notifiedSlugs = new Set()
 
   // ── Vérification achievements en temps réel ──────────────────────────────
@@ -74,9 +74,17 @@ export function useGame(canvasRef, avatarColor = 240) {
 
     if (newUnlocks.length > 0) {
       justUnlocked.value = newUnlocks
-      // Reset après 100ms pour permettre plusieurs déclenchements successifs
       setTimeout(() => { justUnlocked.value = [] }, 100)
     }
+  }
+
+  /**
+   * Pré-charge les achievements déjà débloqués en base pour éviter
+   * d'afficher des notifications pour des badges déjà obtenus
+   * @param {string[]} slugs - Slugs des achievements déjà débloqués
+   */
+  function preloadUnlocked(slugs) {
+    slugs.forEach(slug => notifiedSlugs.add(slug))
   }
 
   // ── Dessin du poulpe ─────────────────────────────────────────────────────
@@ -426,7 +434,8 @@ export function useGame(canvasRef, avatarColor = 240) {
     nextDir            = { x: 1, y: 0 }
     pendingDir         = null
     stepCount          = 0
-    notifiedSlugs      = new Set() // reset des achievements notifiés
+    // notifiedSlugs intentionnellement PAS remis à zéro
+    // pour ne pas réafficher les achievements déjà débloqués
     justUnlocked.value = []
 
     const midX = Math.floor(cols / 2)
@@ -463,6 +472,6 @@ export function useGame(canvasRef, avatarColor = 240) {
 
   return {
     score, bestScore, state, level, isDemo, justUnlocked,
-    init, start, handleKey, getDuration
+    init, start, handleKey, getDuration, preloadUnlocked
   }
 }

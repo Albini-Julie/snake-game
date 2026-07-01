@@ -1,4 +1,4 @@
-// ── Constantes du jeu ────────────────────────────────────────────────────────
+// Constantes du jeu
 export const CELL  = 20
 export const COLS  = 20
 export const ROWS  = 20
@@ -13,10 +13,20 @@ export const DIRS = {
 
 const OPPOSITE = { UP: 'DOWN', DOWN: 'UP', LEFT: 'RIGHT', RIGHT: 'LEFT' }
 
+/**
+ * Génère un identifiant de room aléatoire lisible
+ * @returns {string} Identifiant de 6 caractères alphanumériques
+ */
 export function randomRoomId() {
   return Math.random().toString(36).slice(2, 8).toUpperCase()
 }
 
+/**
+ * Place un fruit sur une case libre en dehors des deux snakes
+ * @param {Array<{x: number, y: number}>} snake1
+ * @param {Array<{x: number, y: number}>} snake2
+ * @returns {{ x: number, y: number }}
+ */
 export function placeFruit(snake1, snake2) {
   const occupied = new Set([
     ...snake1.map(s => `${s.x},${s.y}`),
@@ -30,6 +40,13 @@ export function placeFruit(snake1, snake2) {
   return { x: fx, y: fy }
 }
 
+/**
+ * Crée un snake de 3 segments orienté dans une direction
+ * @param {number} startX - Position X de la tête
+ * @param {number} startY - Position Y de la tête
+ * @param {string} dir - Direction initiale ('UP' | 'DOWN' | 'LEFT' | 'RIGHT')
+ * @returns {Array<{x: number, y: number}>}
+ */
 export function createSnake(startX, startY, dir) {
   return [
     { x: startX - 2 * DIRS[dir].x, y: startY - 2 * DIRS[dir].y },
@@ -38,6 +55,12 @@ export function createSnake(startX, startY, dir) {
   ]
 }
 
+/**
+ * Crée l'état initial d'une partie à deux joueurs
+ * @param {{ id: string, userId: string, username: string }} p1
+ * @param {{ id: string, userId: string, username: string }} p2
+ * @returns {object} État initial du jeu
+ */
 export function createGameState(p1, p2) {
   const snake1 = createSnake(4,  10, 'RIGHT')
   const snake2 = createSnake(15, 10, 'LEFT')
@@ -52,6 +75,11 @@ export function createGameState(p1, p2) {
   }
 }
 
+/**
+ * Met à jour la direction demandée d'un joueur en interdisant le demi-tour
+ * @param {object} player - Joueur à mettre à jour
+ * @param {string} direction - Nouvelle direction ('UP' | 'DOWN' | 'LEFT' | 'RIGHT')
+ */
 export function setPlayerDirection(player, direction) {
   if (!player.alive) return
   if (direction !== OPPOSITE[player.dir]) {
@@ -59,6 +87,12 @@ export function setPlayerDirection(player, direction) {
   }
 }
 
+/**
+ * Avance tous les joueurs vivants d'un tick et résout les collisions.
+ * Mute directement l'objet state passé en paramètre.
+ * @param {object} state - État courant du jeu
+ * @returns {object} État mis à jour
+ */
 export function stepGame(state) {
   const [p1, p2] = state.players
 
@@ -99,6 +133,11 @@ export function stepGame(state) {
   return state
 }
 
+/**
+ * Détermine si la partie est terminée et qui en est le gagnant
+ * @param {object} state - État courant du jeu
+ * @returns {{ finished: boolean, winner: object|null }}
+ */
 export function checkGameOver(state) {
   const alivePlayers = state.players.filter(p => p.alive)
 
@@ -119,6 +158,11 @@ export function checkGameOver(state) {
   return { finished: true, winner }
 }
 
+/**
+ * Sérialise l'état du jeu pour l'envoyer au client
+ * @param {object} state - État courant du jeu
+ * @returns {{ players: object[], fruit: object }}
+ */
 export function serializeState(state) {
   return {
     players: state.players.map(p => ({

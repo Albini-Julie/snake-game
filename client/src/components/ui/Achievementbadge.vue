@@ -1,7 +1,7 @@
 <template>
   <div
     :class="[
-      'flex flex-col items-center gap-2 p-3 border-2 transition-all',
+      'relative flex flex-col items-center gap-2 p-3 border-2 transition-all overflow-hidden',
       unlocked
         ? [
             colorMap[color].border,
@@ -11,6 +11,9 @@
         : 'border-game-border bg-game-bg opacity-40 grayscale',
     ]"
   >
+    <!-- Effet de brillance sur les badges débloqués -->
+    <div v-if="unlocked" class="shine-overlay" />
+
     <div
       class="w-6 h-6 flex items-center justify-center border-2"
       :class="
@@ -48,7 +51,6 @@ const props = defineProps({
   unlockedAt: { type: String, default: null },
 });
 
-// Map couleur → classe Tailwind
 const colorMap = {
   indigo: {
     border: "border-indigo-400",
@@ -99,3 +101,34 @@ function formatDate(dateStr) {
     .toUpperCase();
 }
 </script>
+
+<style scoped>
+.shine-overlay {
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.35) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-20deg);
+  animation: shine 2.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes shine {
+  0% {
+    left: -75%;
+  }
+  40% {
+    left: 125%;
+  }
+  100% {
+    left: 125%;
+  }
+}
+</style>

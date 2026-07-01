@@ -99,6 +99,22 @@ const stars = Array.from({ length: 80 }, (_, i) => ({
 </style>
 
 <style>
+/* Curseur pixel art global */
+*,
+*::before,
+*::after,
+button,
+a,
+[role="button"],
+input,
+select,
+textarea,
+label {
+  cursor:
+    url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDMyIDMyIiBzaGFwZS1yZW5kZXJpbmc9ImNyaXNwRWRnZXMiPjxyZWN0IHg9IjE0IiB5PSIwIiB3aWR0aD0iNCIgaGVpZ2h0PSIxMiIgZmlsbD0id2hpdGUiLz48cmVjdCB4PSIxNCIgeT0iMjAiIHdpZHRoPSI0IiBoZWlnaHQ9IjEyIiBmaWxsPSJ3aGl0ZSIvPjxyZWN0IHg9IjAiIHk9IjE0IiB3aWR0aD0iMTIiIGhlaWdodD0iNCIgZmlsbD0id2hpdGUiLz48cmVjdCB4PSIyMCIgeT0iMTQiIHdpZHRoPSIxMiIgaGVpZ2h0PSI0IiBmaWxsPSJ3aGl0ZSIvPjwvc3ZnPg==")
+      16 16,
+    crosshair !important;
+}
 /* Transition CRT entre les pages */
 .crt-enter-active,
 .crt-leave-active {

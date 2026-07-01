@@ -1,3 +1,5 @@
+import logger from '../config/logger.js'
+
 const MISTRAL_URL = process.env.MISTRAL_URL ?? 'https://api.mistral.ai/v1/chat/completions'
 const CACHE_TTL    = Number(process.env.AI_USERNAMES_CACHE_TTL_MS ?? 5 * 60 * 1000)
 
@@ -145,7 +147,7 @@ Réponds UNIQUEMENT avec un seul mot parmi : ${safe.join(', ')}`
     return safe.includes(answer) ? answer : safe[0]
 
   } catch (err) {
-    console.error('Erreur IA demo-move:', err)
+    logger.error({ err }, 'Erreur IA demo-move')
     return getFallbackDirection({ safe, moves, fruit })
   }
 }

@@ -1,3 +1,4 @@
+import logger from '../server/config/logger.js'
 import { checkMultiplayerAchievements } from './services/achievementService.js'
 import {
   SPEED,
@@ -52,7 +53,7 @@ async function tick(roomId, io) {
 // Setup Socket.io 
 export function setupMultiplayer(io) {
   io.on('connection', socket => {
-    console.log(`Socket connecté : ${socket.id}`)
+    logger.info({ socketId: socket.id }, 'Socket connecté')
 
     // Matchmaking automatique 
     socket.on('matchmaking:join', ({ username, userId }) => {
@@ -159,7 +160,7 @@ export function setupMultiplayer(io) {
 
     // Déconnexion
     socket.on('disconnect', () => {
-      console.log(`Socket déconnecté : ${socket.id}`)
+      logger.info({ socketId: socket.id }, 'Socket déconnecté')
 
       if (waitingPlayer?.id === socket.id) {
         waitingPlayer = null

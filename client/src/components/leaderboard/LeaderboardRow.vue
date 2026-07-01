@@ -13,7 +13,7 @@
       class="font-game w-8 text-center shrink-0 text-pixel-sm"
       :class="rankColor"
     >
-      {{ rank === 1 ? "►" : "" }}{{ String(rank).padStart(2, "0") }}
+      {{ String(rank).padStart(2, "0") }}
     </span>
 
     <!-- Avatar -->

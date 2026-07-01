@@ -54,12 +54,46 @@
           </p>
         </button>
       </div>
+
+      <!-- Stats rapides -->
+      <div
+        v-if="stats"
+        class="shadow-pixel-card bg-game-surface/60 p-4 flex justify-around"
+      >
+        <div class="flex flex-col items-center gap-1">
+          <p class="font-game text-slate-500 text-pixel-sm uppercase">Games</p>
+          <p class="font-game text-white text-2xl">{{ stats.played }}</p>
+        </div>
+        <div class="w-px bg-game-border" />
+        <div class="flex flex-col items-center gap-1">
+          <p class="font-game text-slate-500 text-pixel-sm uppercase">Best</p>
+          <p class="font-game text-game-accent text-2xl">{{ stats.best }}</p>
+        </div>
+        <div class="w-px bg-game-border" />
+        <div class="flex flex-col items-center gap-1">
+          <p class="font-game text-slate-500 text-pixel-sm uppercase">Avg</p>
+          <p class="font-game text-green-400 text-2xl">{{ stats.average }}</p>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { getMyStats } from "@/api/scores";
 import AppIcon from "@/components/ui/AppIcon.vue";
+
 const router = useRouter();
+const stats = ref(null);
+
+onMounted(async () => {
+  try {
+    const { data } = await getMyStats();
+    stats.value = data;
+  } catch {
+    // silencieux — les stats sont optionnelles sur cette page
+  }
+});
 </script>

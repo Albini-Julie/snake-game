@@ -57,6 +57,12 @@
     >
       IA controls the octopus
     </p>
+
+    <!-- Notification achievements -->
+    <AchievementNotification
+      :slugs="game.justUnlocked.value"
+      :all-achievements="allAchievements"
+    />
   </div>
 </template>
 
@@ -67,9 +73,11 @@ import { useAuthStore } from "@/stores/auth";
 import { useGame } from "@/composables/useGame";
 import { saveScore } from "@/api/scores";
 import { getGameAdvice } from "@/api/ai";
+import { getAllAchievements } from "@/api/achievements";
 import AppButton from "@/components/ui/AppButton.vue";
 import GameHud from "@/components/game/GameHud.vue";
 import GameOverlay from "@/components/game/GameOverlay.vue";
+import AchievementNotification from "@/components/ui/AchievementNotification.vue";
 
 const CANVAS_W = window.innerWidth < 640 ? 320 : 400;
 const CANVAS_H = window.innerWidth < 640 ? 320 : 400;
@@ -98,10 +106,17 @@ const saved = ref(false);
 const saveError = ref("");
 const advice = ref("");
 const adviceLoading = ref(false);
+const allAchievements = ref([]);
 
-onMounted(() => {
+onMounted(async () => {
   game.init(canvasRef.value);
   window.addEventListener("keydown", game.handleKey);
+  try {
+    const { data } = await getAllAchievements();
+    allAchievements.value = data;
+  } catch {
+    /* silencieux */
+  }
 });
 
 onUnmounted(() => {

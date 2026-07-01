@@ -24,26 +24,62 @@ const DIR_NAME = {
   '1,0':  'RIGHT',
 }
 
+// ── Conditions des achievements solo (vérifiées côté client en temps réel) ───
+const ACHIEVEMENT_CONDITIONS = [
+  { slug: 'first_catch',  check: (s, l, t) => s >= 1  },
+  { slug: 'fish_hunter',  check: (s, l, t) => s >= 5  },
+  { slug: 'squid_level',  check: (s, l, t) => s >= 10 },
+  { slug: 'octopus_king', check: (s, l, t) => s >= 20 },
+  { slug: 'on_fire',      check: (s, l, t) => l >= 3  },
+  { slug: 'speed_demon',  check: (s, l, t) => l >= 5  },
+  { slug: 'survivor',     check: (s, l, t) => t >= 30 },
+  { slug: 'veteran',      check: (s, l, t) => t >= 60 },
+  { slug: 'legend',       check: (s, l, t) => t >= 120 },
+]
+
 export function useGame(canvasRef, avatarColor = 240) {
-  const score     = ref(0)
-  const bestScore = ref(Number(localStorage.getItem('poulpentin_best') ?? 0))
-  const state     = ref('idle')
-  const level     = ref(1)
-  const isDemo    = ref(false)
+  const score              = ref(0)
+  const bestScore          = ref(Number(localStorage.getItem('poulpentin_best') ?? 0))
+  const state              = ref('idle')
+  const level              = ref(1)
+  const isDemo             = ref(false)
+  const justUnlocked       = ref([]) // slugs débloqués en temps réel
 
-  let snake     = []
-  let fruit     = null
-  let dir       = { x: 1, y: 0 }
-  let nextDir   = { x: 1, y: 0 }
-  let loop      = null
-  let cols      = 0
-  let rows      = 0
-  let startTime = 0
-  let ctx       = null
-  let stepCount = 0        // nb de cases parcourues depuis le dernier appel IA
-  let pendingDir = null    // direction suggérée par l'IA en attente
+  let snake      = []
+  let fruit      = null
+  let dir        = { x: 1, y: 0 }
+  let nextDir    = { x: 1, y: 0 }
+  let loop       = null
+  let cols       = 0
+  let rows       = 0
+  let startTime  = 0
+  let ctx        = null
+  let stepCount  = 0
+  let pendingDir = null
 
-  // Dessin du poulpe
+  // Achievements déjà notifiés pendant cette partie (évite les doublons)
+  let notifiedSlugs = new Set()
+
+  // ── Vérification achievements en temps réel ──────────────────────────────
+  function checkLiveAchievements() {
+    const elapsedSec = Math.round((Date.now() - startTime) / 1000)
+    const newUnlocks = []
+
+    for (const { slug, check } of ACHIEVEMENT_CONDITIONS) {
+      if (!notifiedSlugs.has(slug) && check(score.value, level.value, elapsedSec)) {
+        notifiedSlugs.add(slug)
+        newUnlocks.push(slug)
+      }
+    }
+
+    if (newUnlocks.length > 0) {
+      justUnlocked.value = newUnlocks
+      // Reset après 100ms pour permettre plusieurs déclenchements successifs
+      setTimeout(() => { justUnlocked.value = [] }, 100)
+    }
+  }
+
+  // ── Dessin du poulpe ─────────────────────────────────────────────────────
   function drawPoulpe(cx, cy, size, angle, color, isHead) {
     ctx.save()
     ctx.translate(cx, cy)
@@ -99,7 +135,7 @@ export function useGame(canvasRef, avatarColor = 240) {
     ctx.restore()
   }
 
-  // Dessin du fruit (poisson)
+  // ── Dessin du fruit (poisson) ─────────────────────────────────────────────
   function drawFruit(fx, fy) {
     const cx = fx * CELL + CELL / 2
     const cy = fy * CELL + CELL / 2
@@ -170,7 +206,7 @@ export function useGame(canvasRef, avatarColor = 240) {
     ctx.restore()
   }
 
-  // Rendu
+  // ── Rendu ─────────────────────────────────────────────────────────────────
   function draw() {
     const canvas = canvasRef.value
     if (!canvas) return
@@ -192,7 +228,6 @@ export function useGame(canvasRef, avatarColor = 240) {
     if (fruit) drawFruit(fruit.x, fruit.y)
     if (snake.length === 0) return
 
-    // Badge "IA" en mode démo
     if (isDemo.value) {
       ctx.fillStyle = '#6366f1'
       ctx.fillRect(8, 8, 32, 18)
@@ -225,7 +260,7 @@ export function useGame(canvasRef, avatarColor = 240) {
     })
   }
 
-  // IA démo : demande la prochaine direction à Mistral
+  // ── IA démo ───────────────────────────────────────────────────────────────
   async function askAI() {
     const currentDirName = DIR_NAME[`${dir.x},${dir.y}`] ?? 'RIGHT'
     try {
@@ -244,7 +279,7 @@ export function useGame(canvasRef, avatarColor = 240) {
     }
   }
 
-  // Logique de jeu
+  // ── Logique de jeu ────────────────────────────────────────────────────────
   function placeFruit() {
     const occupied = new Set(snake.map(s => `${s.x},${s.y}`))
     let fx, fy
@@ -256,16 +291,13 @@ export function useGame(canvasRef, avatarColor = 240) {
   }
 
   function tick() {
-    // En mode démo, applique la direction suggérée par l'IA si disponible
     if (isDemo.value) {
       if (pendingDir) {
-        // Vérifie que ce n'est pas un demi-tour
         if (!(pendingDir.x === -dir.x && pendingDir.y === -dir.y)) {
           nextDir = pendingDir
         }
         pendingDir = null
       }
-      // Demande une nouvelle direction toutes les 5 cases
       stepCount++
       if (stepCount >= 5) {
         stepCount = 0
@@ -295,6 +327,9 @@ export function useGame(canvasRef, avatarColor = 240) {
       level.value = Math.min(5, 1 + Math.floor(score.value / 5))
       placeFruit()
       restartLoop()
+
+      // Vérifie les achievements après chaque fruit mangé
+      if (!isDemo.value) checkLiveAchievements()
     } else {
       snake.shift()
     }
@@ -302,78 +337,77 @@ export function useGame(canvasRef, avatarColor = 240) {
     draw()
   }
 
-  // Particules de mort
-let deathParticles = []
+  // ── Particules de mort ────────────────────────────────────────────────────
+  let deathParticles = []
 
-function createDeathParticles() {
-  deathParticles = snake.map(seg => ({
-    x:     seg.x * CELL + CELL / 2,
-    y:     seg.y * CELL + CELL / 2,
-    vx:    (Math.random() - 0.5) * 6,  // vitesse aléatoire X
-    vy:    (Math.random() - 0.5) * 6,  // vitesse aléatoire Y
-    alpha: 1,
-    size:  CELL * 0.4,
-    color: `hsl(${typeof avatarColor === 'object' ? avatarColor.value : avatarColor}, 80%, 60%)`
-  }))
-}
-
-function animateDeath() {
-  const canvas = canvasRef.value
-  if (!canvas) return
-
-  // Fond
-  ctx.fillStyle = '#0f172a'
-  ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-  // Flash rouge au début
-  ctx.fillStyle = `rgba(239, 68, 68, ${Math.max(0, deathParticles[0]?.alpha - 0.3) * 0.3})`
-  ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-  let allGone = true
-
-  deathParticles.forEach(p => {
-    if (p.alpha <= 0) return
-    allGone = false
-
-    // Met à jour la position
-    p.x     += p.vx
-    p.y     += p.vy
-    p.vy    += 0.2   // gravité légère
-    p.alpha -= 0.03
-    p.size  *= 0.97  // rétrécit
-
-    // Dessine la particule
-    ctx.save()
-    ctx.globalAlpha = Math.max(0, p.alpha)
-    ctx.translate(p.x, p.y)
-    ctx.beginPath()
-    ctx.arc(0, 0, p.size, Math.PI, 0)
-    ctx.fillStyle = p.color
-    ctx.fill()
-    // Tentacules simplifiées
-    for (let i = 0; i < 4; i++) {
-      const tx = -p.size + i * (p.size * 0.6) + p.size * 0.3
-      ctx.beginPath()
-      ctx.ellipse(tx, p.size * 0.5, p.size * 0.15, p.size * 0.4, 0, 0, Math.PI * 2)
-      ctx.fill()
-    }
-    ctx.restore()
-  })
-
-  if (allGone) {
-    state.value = 'dead' 
-    return
+  function createDeathParticles() {
+    deathParticles = snake.map(seg => ({
+      x:     seg.x * CELL + CELL / 2,
+      y:     seg.y * CELL + CELL / 2,
+      vx:    (Math.random() - 0.5) * 6,
+      vy:    (Math.random() - 0.5) * 6,
+      alpha: 1,
+      size:  CELL * 0.4,
+      color: `hsl(${typeof avatarColor === 'object' ? avatarColor.value : avatarColor}, 80%, 60%)`
+    }))
   }
 
-  requestAnimationFrame(animateDeath)
-}
+  function animateDeath() {
+    const canvas = canvasRef.value
+    if (!canvas) return
 
-function die() {
-  stopLoop()
-  state.value = 'dying'  
-  createDeathParticles()
-  requestAnimationFrame(animateDeath)
-}
+    ctx.fillStyle = '#0f172a'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+    ctx.fillStyle = `rgba(239, 68, 68, ${Math.max(0, deathParticles[0]?.alpha - 0.3) * 0.3})`
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+    let allGone = true
+
+    deathParticles.forEach(p => {
+      if (p.alpha <= 0) return
+      allGone = false
+
+      p.x     += p.vx
+      p.y     += p.vy
+      p.vy    += 0.2
+      p.alpha -= 0.03
+      p.size  *= 0.97
+
+      ctx.save()
+      ctx.globalAlpha = Math.max(0, p.alpha)
+      ctx.translate(p.x, p.y)
+      ctx.beginPath()
+      ctx.arc(0, 0, p.size, Math.PI, 0)
+      ctx.fillStyle = p.color
+      ctx.fill()
+      for (let i = 0; i < 4; i++) {
+        const tx = -p.size + i * (p.size * 0.6) + p.size * 0.3
+        ctx.beginPath()
+        ctx.ellipse(tx, p.size * 0.5, p.size * 0.15, p.size * 0.4, 0, 0, Math.PI * 2)
+        ctx.fill()
+      }
+      ctx.restore()
+    })
+
+    if (allGone) {
+      state.value = 'dead'
+      return
+    }
+
+    requestAnimationFrame(animateDeath)
+  }
+
+  function die() {
+    stopLoop()
+    state.value = 'dying'
+
+    // Vérifie les achievements de survie au moment de la mort
+    if (!isDemo.value) checkLiveAchievements()
+
+    createDeathParticles()
+    requestAnimationFrame(animateDeath)
+  }
 
   function stopLoop()    { if (loop) { clearInterval(loop); loop = null } }
   function restartLoop() { stopLoop(); loop = setInterval(tick, SPEEDS[level.value - 1]) }
@@ -385,13 +419,15 @@ function die() {
   }
 
   function start(demo = false) {
-    score.value  = 0
-    level.value  = 1
-    isDemo.value = demo
-    dir          = { x: 1, y: 0 }
-    nextDir      = { x: 1, y: 0 }
-    pendingDir   = null
-    stepCount    = 0
+    score.value        = 0
+    level.value        = 1
+    isDemo.value       = demo
+    dir                = { x: 1, y: 0 }
+    nextDir            = { x: 1, y: 0 }
+    pendingDir         = null
+    stepCount          = 0
+    notifiedSlugs      = new Set() // reset des achievements notifiés
+    justUnlocked.value = []
 
     const midX = Math.floor(cols / 2)
     const midY = Math.floor(rows / 2)
@@ -403,7 +439,6 @@ function die() {
     startTime = Date.now()
     placeFruit()
 
-    // En mode démo, on demande la première direction immédiatement
     if (demo) askAI()
 
     state.value = 'playing'
@@ -412,7 +447,6 @@ function die() {
   }
 
   function handleKey(e) {
-    // Les touches sont désactivées en mode démo
     if (isDemo.value) return
     const newDir = DIRECTIONS[e.key]
     if (!newDir) return
@@ -428,7 +462,7 @@ function die() {
   onUnmounted(stopLoop)
 
   return {
-    score, bestScore, state, level, isDemo,
+    score, bestScore, state, level, isDemo, justUnlocked,
     init, start, handleKey, getDuration
   }
 }

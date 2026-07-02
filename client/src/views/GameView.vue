@@ -36,7 +36,7 @@
 
     <div
       v-if="!game.isDemo.value"
-      class="grid grid-cols-3 gap-2 mt-2 sm:hidden"
+      class="grid grid-cols-3 gap-2 mt-2 md:hidden"
     >
       <div />
       <AppButton variant="secondary" @click="emitKey('ArrowUp')">▲</AppButton>

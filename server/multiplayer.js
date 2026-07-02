@@ -1,4 +1,4 @@
-import logger from '../server/config/logger.js'
+import logger from './config/logger.js'
 import { checkMultiplayerAchievements } from './services/achievementService.js'
 import {
   SPEED,

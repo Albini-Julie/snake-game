@@ -50,7 +50,7 @@ export function useGame(canvasRef, avatarColor = 240) {
   const score             = ref(0)
   const bestScore         = ref(Number(localStorage.getItem('poulpentin_best') ?? 0))
   const state             = ref('idle')
-  const level             = ref(1)
+  const level              = ref(1)
   const isDemo            = ref(false)
   const justUnlocked      = ref([])
   const worldRecordBeaten = ref(false)
@@ -99,6 +99,16 @@ export function useGame(canvasRef, avatarColor = 240) {
 
   function setWorldRecord(record) {
     currentWorldRecord = record
+  }
+
+  // NOUVEAU : permet d'initialiser bestScore depuis la valeur serveur (compte utilisateur),
+  // sans jamais écraser une valeur locale plus haute par erreur.
+  function setBestScore(value) {
+    const v = Number(value) || 0
+    if (v > bestScore.value) {
+      bestScore.value = v
+      localStorage.setItem('poulpentin_best', bestScore.value)
+    }
   }
 
   /**
@@ -232,7 +242,7 @@ export function useGame(canvasRef, avatarColor = 240) {
     ctx.stroke()
 
     ctx.restore()
-  }
+    }
 
   function draw() {
     const canvas = canvasRef.value
@@ -505,6 +515,7 @@ export function useGame(canvasRef, avatarColor = 240) {
 
   return {
     score, bestScore, state, level, isDemo, justUnlocked, worldRecordBeaten,
-    init, start, handleKey, getDuration, preloadUnlocked, getReplayData, setWorldRecord
+    init, start, handleKey, getDuration, preloadUnlocked, getReplayData,
+    setWorldRecord, setBestScore
   }
 }

@@ -74,7 +74,7 @@ import { ref, watch, computed, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import { useGame } from "@/composables/useGame";
-import { saveScore, getWorldRecordReplay } from "@/api/scores";
+import { saveScore, getWorldRecordReplay, getMyStats } from "@/api/scores";
 import { getGameAdvice } from "@/api/ai";
 import { getAllAchievements, getMyAchievements } from "@/api/achievements";
 import AppButton from "@/components/ui/AppButton.vue";
@@ -116,10 +116,11 @@ onMounted(async () => {
   game.init(canvasRef.value);
   window.addEventListener("keydown", game.handleKey);
   try {
-    const [allRes, myRes, replayRes] = await Promise.all([
+    const [allRes, myRes, replayRes, statsRes] = await Promise.all([
       getAllAchievements(),
       getMyAchievements(),
       getWorldRecordReplay().catch(() => ({ data: null })),
+      getMyStats().catch(() => ({ data: null })),
     ]);
     allAchievements.value = allRes.data;
     const alreadyUnlocked = myRes.data
@@ -127,6 +128,10 @@ onMounted(async () => {
       .filter(Boolean);
     game.preloadUnlocked(alreadyUnlocked);
     game.setWorldRecord(replayRes.data?.value ?? 0);
+    // NOUVEAU : initialise le meilleur score depuis le compte utilisateur (serveur),
+    // au lieu de dépendre uniquement du localStorage du navigateur.
+    // Le endpoint /scores/stats (getUserStats) renvoie { played, best, average, totalDuration }
+    game.setBestScore(statsRes.data?.best ?? 0);
   } catch {
     /* silencieux */
   }

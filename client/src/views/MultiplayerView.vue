@@ -262,14 +262,13 @@
           </div>
         </div>
       </div>
-
-      <p
-        v-if="state === 'playing'"
-        class="font-game text-slate-600 text-pixel-sm"
-      >
-        USE ARROW KEYS TO CONTROL YOUR OCTOPUS
-      </p>
     </div>
+    <p
+      v-if="state === 'playing'"
+      class="font-game text-slate-600 text-pixel-sm"
+    >
+      USE ARROW KEYS TO CONTROL YOUR OCTOPUS
+    </p>
   </div>
 </template>
 

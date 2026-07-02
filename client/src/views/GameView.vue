@@ -8,46 +8,51 @@
       :level="game.level.value"
     />
 
-    <div
-      class="relative border-2 border-game-border overflow-hidden"
-      :style="{ width: CANVAS_W + 'px', height: CANVAS_H + 'px' }"
-    >
-      <canvas
-        ref="canvasRef"
-        :width="CANVAS_W"
-        :height="CANVAS_H"
-        class="block"
-      />
-
-      <GameOverlay
-        :state="game.state.value"
-        :score="game.score.value"
-        :saving="saving"
-        :saved="saved"
-        :save-error="saveError"
-        :advice="advice"
-        :advice-loading="adviceLoading"
-        :was-demo="game.isDemo.value"
-        @start="startGame"
-        @demo="startDemo"
-        @leaderboard="router.push('/leaderboard')"
-      />
-    </div>
-
-    <div
-      v-if="!game.isDemo.value"
-      class="grid grid-cols-3 gap-2 mt-2 md:hidden"
-    >
-      <div />
-      <AppButton variant="secondary" @click="emitKey('ArrowUp')">▲</AppButton>
-      <div />
-      <AppButton variant="secondary" @click="emitKey('ArrowLeft')">◄</AppButton>
-      <AppButton variant="secondary" @click="emitKey('ArrowDown')">▼</AppButton>
-      <AppButton variant="secondary" @click="emitKey('ArrowRight')"
-        >►</AppButton
+    <div class="flex flex-col md:flex-row items-center gap-10">
+      <div
+        class="relative border-2 border-game-border overflow-hidden"
+        :style="{ width: CANVAS_W + 'px', height: CANVAS_H + 'px' }"
       >
-    </div>
+        <canvas
+          ref="canvasRef"
+          :width="CANVAS_W"
+          :height="CANVAS_H"
+          class="block"
+        />
 
+        <GameOverlay
+          :state="game.state.value"
+          :score="game.score.value"
+          :saving="saving"
+          :saved="saved"
+          :save-error="saveError"
+          :advice="advice"
+          :advice-loading="adviceLoading"
+          :was-demo="game.isDemo.value"
+          @start="startGame"
+          @demo="startDemo"
+          @leaderboard="router.push('/leaderboard')"
+        />
+      </div>
+
+      <div
+        v-if="!game.isDemo.value"
+        class="grid grid-cols-3 gap-2 mt-2 xl:hidden"
+      >
+        <div />
+        <AppButton variant="secondary" @click="emitKey('ArrowUp')">▲</AppButton>
+        <div />
+        <AppButton variant="secondary" @click="emitKey('ArrowLeft')"
+          >◄</AppButton
+        >
+        <AppButton variant="secondary" @click="emitKey('ArrowDown')"
+          >▼</AppButton
+        >
+        <AppButton variant="secondary" @click="emitKey('ArrowRight')"
+          >►</AppButton
+        >
+      </div>
+    </div>
     <p
       v-if="game.isDemo.value && game.state.value === 'playing'"
       class="font-game text-slate-600 text-center text-pixel-sm uppercase"

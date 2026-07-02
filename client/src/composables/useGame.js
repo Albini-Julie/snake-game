@@ -24,8 +24,6 @@ const DIR_NAME = {
   '1,0':  'RIGHT',
 }
 
-// RNG déterministe (Mulberry32)
-// Génère toujours la même séquence pour une seed donnée
 function createRng(seed) {
   let s = seed
   return function () {
@@ -36,7 +34,6 @@ function createRng(seed) {
   }
 }
 
-// Conditions des achievements solo
 const ACHIEVEMENT_CONDITIONS = [
   { slug: 'first_catch',  check: (s, l, t) => s >= 1   },
   { slug: 'fish_hunter',  check: (s, l, t) => s >= 5   },
@@ -50,13 +47,13 @@ const ACHIEVEMENT_CONDITIONS = [
 ]
 
 export function useGame(canvasRef, avatarColor = 240) {
-  const score              = ref(0)
-  const bestScore          = ref(Number(localStorage.getItem('poulpentin_best') ?? 0))
-  const state              = ref('idle')
-  const level              = ref(1)
-  const isDemo             = ref(false)
-  const justUnlocked       = ref([]) // slugs débloqués en temps réel
-  const worldRecordBeaten  = ref(false) // notification record mondial
+  const score             = ref(0)
+  const bestScore         = ref(Number(localStorage.getItem('poulpentin_best') ?? 0))
+  const state             = ref('idle')
+  const level             = ref(1)
+  const isDemo            = ref(false)
+  const justUnlocked      = ref([])
+  const worldRecordBeaten = ref(false)
 
   let snake      = []
   let fruit      = null
@@ -70,16 +67,15 @@ export function useGame(canvasRef, avatarColor = 240) {
   let stepCount  = 0
   let pendingDir = null
 
-    // RNG et enregistrement
-  let rng      = null
-  let gameSeed = 0
-  let inputLog = []
+  let rng         = null
+  let gameSeed    = 0
+  let inputLog    = []
+  let tickCounter = 0  // compte les ticks depuis le début de la partie
 
-  let notifiedSlugs    = new Set()
-  let currentWorldRecord = 0       // record mondial chargé au démarrage
-  let worldRecordNotified = false  // évite la double notification
+  let notifiedSlugs       = new Set()
+  let currentWorldRecord  = 0
+  let worldRecordNotified = false
 
-    // Vérification achievements
   function checkLiveAchievements() {
     const elapsedSec = Math.round((Date.now() - startTime) / 1000)
     const newUnlocks = []
@@ -97,31 +93,22 @@ export function useGame(canvasRef, avatarColor = 240) {
     }
   }
 
-  /**
-   * Pré-charge les achievements déjà débloqués
-   * @param {string[]} slugs
-   */
   function preloadUnlocked(slugs) {
     slugs.forEach(slug => notifiedSlugs.add(slug))
   }
 
-  /**
-   * Définit le record mondial actuel pour la détection en temps réel
-   * @param {number} record
-   */
   function setWorldRecord(record) {
     currentWorldRecord = record
   }
 
   /**
    * Retourne la seed et les inputs de la partie pour sauvegarde
-   * @returns {{ seed: number, inputs: Array }}
+   * @returns {{ seed: number, inputs: Array<{ dir: string, tick: number }> }}
    */
   function getReplayData() {
     return { seed: gameSeed, inputs: inputLog }
   }
 
-    // Dessin du poulpe
   function drawPoulpe(cx, cy, size, angle, color, isHead) {
     ctx.save()
     ctx.translate(cx, cy)
@@ -177,7 +164,6 @@ export function useGame(canvasRef, avatarColor = 240) {
     ctx.restore()
   }
 
-  // Dessin du fruit (poisson)
   function drawFruit(fx, fy) {
     const cx = fx * CELL + CELL / 2
     const cy = fy * CELL + CELL / 2
@@ -248,7 +234,6 @@ export function useGame(canvasRef, avatarColor = 240) {
     ctx.restore()
   }
 
-  // Rendu
   function draw() {
     const canvas = canvasRef.value
     if (!canvas) return
@@ -302,7 +287,6 @@ export function useGame(canvasRef, avatarColor = 240) {
     })
   }
 
-  // IA démo
   async function askAI() {
     const currentDirName = DIR_NAME[`${dir.x},${dir.y}`] ?? 'RIGHT'
     try {
@@ -321,7 +305,6 @@ export function useGame(canvasRef, avatarColor = 240) {
     }
   }
 
-  // Logique de jeu
   function placeFruit() {
     const occupied = new Set(snake.map(s => `${s.x},${s.y}`))
     let fx, fy
@@ -333,6 +316,8 @@ export function useGame(canvasRef, avatarColor = 240) {
   }
 
   function tick() {
+    tickCounter++ // incrémente le compteur de ticks
+
     if (isDemo.value) {
       if (pendingDir) {
         if (!(pendingDir.x === -dir.x && pendingDir.y === -dir.y)) {
@@ -372,11 +357,9 @@ export function useGame(canvasRef, avatarColor = 240) {
 
       if (!isDemo.value) {
         checkLiveAchievements()
-
-        // Vérifie si nouveau record mondial en temps réel
         if (!worldRecordNotified && score.value > currentWorldRecord) {
-          worldRecordNotified    = true
-          currentWorldRecord     = score.value
+          worldRecordNotified     = true
+          currentWorldRecord      = score.value
           worldRecordBeaten.value = true
           setTimeout(() => { worldRecordBeaten.value = false }, 100)
         }
@@ -388,7 +371,6 @@ export function useGame(canvasRef, avatarColor = 240) {
     draw()
   }
 
-  // Particules de mort 
   let deathParticles = []
 
   function createDeathParticles() {
@@ -452,9 +434,7 @@ export function useGame(canvasRef, avatarColor = 240) {
   function die() {
     stopLoop()
     state.value = 'dying'
-
     if (!isDemo.value) checkLiveAchievements()
-
     createDeathParticles()
     requestAnimationFrame(animateDeath)
   }
@@ -479,6 +459,7 @@ export function useGame(canvasRef, avatarColor = 240) {
     justUnlocked.value      = []
     worldRecordBeaten.value = false
     worldRecordNotified     = false
+    tickCounter             = 0
 
     gameSeed = Math.floor(Math.random() * 2147483647)
     rng      = createRng(gameSeed)
@@ -509,10 +490,10 @@ export function useGame(canvasRef, avatarColor = 240) {
     if (newDir.x === -dir.x && newDir.y === -dir.y) return
     nextDir = newDir
 
-    // Enregistre l'input avec son timestamp relatif au début de la partie
+    // Enregistre l'input avec le numéro de tick courant (déterministe)
     const dirName = DIR_NAME[`${newDir.x},${newDir.y}`]
     if (dirName) {
-      inputLog.push({ dir: dirName, t: Date.now() - startTime })
+      inputLog.push({ dir: dirName, tick: tickCounter })
     }
   }
 

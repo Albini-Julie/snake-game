@@ -113,7 +113,6 @@ const replayScore = ref(0);
 let ctx = null;
 let inputTimers = [];
 
-// ── RNG déterministe (même algo que useGame.js) ───────────────────────────
 function createRng(seed) {
   let s = seed;
   return function () {
@@ -125,7 +124,6 @@ function createRng(seed) {
   };
 }
 
-// ── Dessin grille ─────────────────────────────────────────────────────────
 function drawGrid() {
   ctx.fillStyle = "#0f172a";
   ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
@@ -145,7 +143,6 @@ function drawGrid() {
   }
 }
 
-// ── Dessin poulpe (identique à useGame.js) ────────────────────────────────
 function drawPoulpe(cx, cy, size, angle, color, isHead) {
   ctx.save();
   ctx.translate(cx, cy);
@@ -207,7 +204,6 @@ function drawPoulpe(cx, cy, size, angle, color, isHead) {
   ctx.restore();
 }
 
-// ── Dessin fruit (identique à useGame.js) ────────────────────────────────
 function drawFruit(f) {
   const cx = f.x * CELL + CELL / 2;
   const cy = f.y * CELL + CELL / 2;
@@ -286,7 +282,6 @@ function drawFruit(f) {
   ctx.restore();
 }
 
-// ── Dessin snake complet ──────────────────────────────────────────────────
 function drawSnake(snake, dir) {
   snake.forEach((seg, i) => {
     const isHead = i === snake.length - 1;
@@ -302,12 +297,10 @@ function drawSnake(snake, dir) {
       angle = Math.atan2(dir.y, dir.x) - Math.PI / 2;
     }
 
-    const color = `hsl(270, 80%, ${lightness}%)`;
-    drawPoulpe(cx, cy, CELL, angle, color, isHead);
+    drawPoulpe(cx, cy, CELL, angle, `hsl(270, 80%, ${lightness}%)`, isHead);
   });
 }
 
-// ── Logique replay ─────────────────────────────────────────────────────────
 function placeFruit(snake, rng) {
   const occupied = new Set(snake.map((s) => `${s.x},${s.y}`));
   let fx, fy;
@@ -326,7 +319,7 @@ const DIR_VECS = {
 };
 
 function stopReplay() {
-  inputTimers.forEach((t) => clearTimeout(t));
+  inputTimers.forEach((t) => clearInterval(t));
   inputTimers = [];
 }
 
@@ -419,25 +412,29 @@ function startReplay() {
   let fruit = placeFruit(snake, rng);
   let level = 1;
   let loop = null;
+  let tickCounter = 0;
 
   const inputs = replayData.value.inputs ?? [];
 
-  inputs.forEach(({ dir: dirName, t }) => {
-    const timer = setTimeout(() => {
-      const newDir = DIR_VECS[dirName];
-      if (newDir && !(newDir.x === -dir.x && newDir.y === -dir.y)) {
-        nextDir = { ...newDir };
-      }
-    }, t);
-    inputTimers.push(timer);
-  });
-
   function tick() {
+    tickCounter++;
+
+    // Met à jour dir en premier
     dir = { ...nextDir };
+
+    // Applique les inputs du tick courant (par numéro de tick, déterministe)
+    inputs
+      .filter((input) => input.tick === tickCounter)
+      .forEach(({ dir: dirName }) => {
+        const newDir = DIR_VECS[dirName];
+        if (newDir && !(newDir.x === -dir.x && newDir.y === -dir.y)) {
+          nextDir = { ...newDir };
+        }
+      });
+
     const head = snake[snake.length - 1];
     const newHead = { x: head.x + dir.x, y: head.y + dir.y };
 
-    // Un seul bloc de collision → dieReplay
     if (
       newHead.x < 0 ||
       newHead.x >= COLS ||
@@ -458,6 +455,7 @@ function startReplay() {
       fruit = placeFruit(snake, rng);
       clearInterval(loop);
       loop = setInterval(tick, SPEEDS[level - 1]);
+      inputTimers.push(loop);
     } else {
       snake.shift();
     }

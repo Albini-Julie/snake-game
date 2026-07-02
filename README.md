@@ -200,6 +200,21 @@ if (event === "SIGNED_OUT") {
 }
 ```
 
+### Évolution de la base de données
+
+Le modèle de données initial (document de cadrage) prévoyait 3 tables : `users`, `avatars` et `scores`. Au fil du développement, deux tables ont été ajoutées pour supporter les nouvelles fonctionnalités :
+
+- `achievements` : liste des badges disponibles (slug, nom, description, couleur)
+- `user_achievements` : table de jointure entre `users` et `achievements`, avec la date de déblocage
+
+Le MLD final est donc :
+
+users(id, username, email, registration_date, password, #avatar_id)
+avatars(id, name, path)
+scores(id, value, duration, registration_date, seed, inputs, #user_id)
+achievements(id, slug, name, description, color)
+user_achievements(id, unlocked_at, #user_id, #achievement_id)
+
 ## Gestion des flux et états
 
 Le projet implémente une gestion complète des états pour chaque flux de données, avec une séparation claire entre la couche API (`client/src/api/`), la logique métier (`server/services/`) et l'affichage.

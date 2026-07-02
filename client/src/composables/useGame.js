@@ -38,24 +38,25 @@ function createRng(seed) {
 
 // Conditions des achievements solo
 const ACHIEVEMENT_CONDITIONS = [
-  { slug: 'first_catch',  check: (s, l, t) => s >= 1  },
-  { slug: 'fish_hunter',  check: (s, l, t) => s >= 5  },
-  { slug: 'squid_level',  check: (s, l, t) => s >= 10 },
-  { slug: 'octopus_king', check: (s, l, t) => s >= 20 },
-  { slug: 'on_fire',      check: (s, l, t) => l >= 3  },
-  { slug: 'speed_demon',  check: (s, l, t) => l >= 5  },
-  { slug: 'survivor',     check: (s, l, t) => t >= 30 },
-  { slug: 'veteran',      check: (s, l, t) => t >= 60 },
+  { slug: 'first_catch',  check: (s, l, t) => s >= 1   },
+  { slug: 'fish_hunter',  check: (s, l, t) => s >= 5   },
+  { slug: 'squid_level',  check: (s, l, t) => s >= 10  },
+  { slug: 'octopus_king', check: (s, l, t) => s >= 20  },
+  { slug: 'on_fire',      check: (s, l, t) => l >= 3   },
+  { slug: 'speed_demon',  check: (s, l, t) => l >= 5   },
+  { slug: 'survivor',     check: (s, l, t) => t >= 30  },
+  { slug: 'veteran',      check: (s, l, t) => t >= 60  },
   { slug: 'legend',       check: (s, l, t) => t >= 120 },
 ]
 
 export function useGame(canvasRef, avatarColor = 240) {
-  const score        = ref(0)
-  const bestScore    = ref(Number(localStorage.getItem('poulpentin_best') ?? 0))
-  const state        = ref('idle')
-  const level        = ref(1)
-  const isDemo       = ref(false)
-  const justUnlocked = ref([]) // slugs débloqués en temps réel
+  const score              = ref(0)
+  const bestScore          = ref(Number(localStorage.getItem('poulpentin_best') ?? 0))
+  const state              = ref('idle')
+  const level              = ref(1)
+  const isDemo             = ref(false)
+  const justUnlocked       = ref([]) // slugs débloqués en temps réel
+  const worldRecordBeaten  = ref(false) // notification record mondial
 
   let snake      = []
   let fruit      = null
@@ -69,14 +70,16 @@ export function useGame(canvasRef, avatarColor = 240) {
   let stepCount  = 0
   let pendingDir = null
 
-  // RNG et enregistrement
-  let rng       = null  // fonction RNG seedée
-  let gameSeed  = 0     // seed de la partie en cours
-  let inputLog  = []    // log des inputs { dir, t }
+    // RNG et enregistrement
+  let rng      = null
+  let gameSeed = 0
+  let inputLog = []
 
-  let notifiedSlugs = new Set()
+  let notifiedSlugs    = new Set()
+  let currentWorldRecord = 0       // record mondial chargé au démarrage
+  let worldRecordNotified = false  // évite la double notification
 
-  // Vérification achievements
+    // Vérification achievements
   function checkLiveAchievements() {
     const elapsedSec = Math.round((Date.now() - startTime) / 1000)
     const newUnlocks = []
@@ -103,6 +106,14 @@ export function useGame(canvasRef, avatarColor = 240) {
   }
 
   /**
+   * Définit le record mondial actuel pour la détection en temps réel
+   * @param {number} record
+   */
+  function setWorldRecord(record) {
+    currentWorldRecord = record
+  }
+
+  /**
    * Retourne la seed et les inputs de la partie pour sauvegarde
    * @returns {{ seed: number, inputs: Array }}
    */
@@ -110,7 +121,7 @@ export function useGame(canvasRef, avatarColor = 240) {
     return { seed: gameSeed, inputs: inputLog }
   }
 
-  // Dessin du poulpe
+    // Dessin du poulpe
   function drawPoulpe(cx, cy, size, angle, color, isHead) {
     ctx.save()
     ctx.translate(cx, cy)
@@ -166,7 +177,7 @@ export function useGame(canvasRef, avatarColor = 240) {
     ctx.restore()
   }
 
-  // ── Dessin du fruit (poisson) ─────────────────────────────────────────────
+  // Dessin du fruit (poisson)
   function drawFruit(fx, fy) {
     const cx = fx * CELL + CELL / 2
     const cy = fy * CELL + CELL / 2
@@ -291,7 +302,7 @@ export function useGame(canvasRef, avatarColor = 240) {
     })
   }
 
-  // ── IA démo ───────────────────────────────────────────────────────────────
+  // IA démo
   async function askAI() {
     const currentDirName = DIR_NAME[`${dir.x},${dir.y}`] ?? 'RIGHT'
     try {
@@ -359,7 +370,17 @@ export function useGame(canvasRef, avatarColor = 240) {
       placeFruit()
       restartLoop()
 
-      if (!isDemo.value) checkLiveAchievements()
+      if (!isDemo.value) {
+        checkLiveAchievements()
+
+        // Vérifie si nouveau record mondial en temps réel
+        if (!worldRecordNotified && score.value > currentWorldRecord) {
+          worldRecordNotified    = true
+          currentWorldRecord     = score.value
+          worldRecordBeaten.value = true
+          setTimeout(() => { worldRecordBeaten.value = false }, 100)
+        }
+      }
     } else {
       snake.shift()
     }
@@ -448,16 +469,17 @@ export function useGame(canvasRef, avatarColor = 240) {
   }
 
   function start(demo = false) {
-    score.value        = 0
-    level.value        = 1
-    isDemo.value       = demo
-    dir                = { x: 1, y: 0 }
-    nextDir            = { x: 1, y: 0 }
-    pendingDir         = null
-    stepCount          = 0
-    justUnlocked.value = []
+    score.value             = 0
+    level.value             = 1
+    isDemo.value            = demo
+    dir                     = { x: 1, y: 0 }
+    nextDir                 = { x: 1, y: 0 }
+    pendingDir              = null
+    stepCount               = 0
+    justUnlocked.value      = []
+    worldRecordBeaten.value = false
+    worldRecordNotified     = false
 
-    // Génère une seed aléatoire et initialise le RNG
     gameSeed = Math.floor(Math.random() * 2147483647)
     rng      = createRng(gameSeed)
     inputLog = []
@@ -501,7 +523,7 @@ export function useGame(canvasRef, avatarColor = 240) {
   onUnmounted(stopLoop)
 
   return {
-    score, bestScore, state, level, isDemo, justUnlocked,
-    init, start, handleKey, getDuration, preloadUnlocked, getReplayData
+    score, bestScore, state, level, isDemo, justUnlocked, worldRecordBeaten,
+    init, start, handleKey, getDuration, preloadUnlocked, getReplayData, setWorldRecord
   }
 }

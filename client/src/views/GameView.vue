@@ -59,6 +59,11 @@
       :slugs="game.justUnlocked.value"
       :all-achievements="allAchievements"
     />
+
+    <WorldRecordNotification
+      :is-world-record="game.worldRecordBeaten.value"
+      :score="game.score.value"
+    />
   </div>
 </template>
 
@@ -67,13 +72,14 @@ import { ref, watch, computed, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import { useGame } from "@/composables/useGame";
-import { saveScore } from "@/api/scores";
+import { saveScore, getWorldRecordReplay } from "@/api/scores";
 import { getGameAdvice } from "@/api/ai";
 import { getAllAchievements, getMyAchievements } from "@/api/achievements";
 import AppButton from "@/components/ui/AppButton.vue";
 import GameHud from "@/components/game/GameHud.vue";
 import GameOverlay from "@/components/game/GameOverlay.vue";
 import AchievementNotification from "@/components/ui/AchievementNotification.vue";
+import WorldRecordNotification from "@/components/ui/WorldRecordNotification.vue";
 
 const CANVAS_W = window.innerWidth < 640 ? 320 : 400;
 const CANVAS_H = window.innerWidth < 640 ? 320 : 400;
@@ -108,15 +114,17 @@ onMounted(async () => {
   game.init(canvasRef.value);
   window.addEventListener("keydown", game.handleKey);
   try {
-    const [allRes, myRes] = await Promise.all([
+    const [allRes, myRes, replayRes] = await Promise.all([
       getAllAchievements(),
       getMyAchievements(),
+      getWorldRecordReplay().catch(() => ({ data: null })),
     ]);
     allAchievements.value = allRes.data;
     const alreadyUnlocked = myRes.data
       .map((a) => a.achievements?.slug)
       .filter(Boolean);
     game.preloadUnlocked(alreadyUnlocked);
+    game.setWorldRecord(replayRes.data?.value ?? 0);
   } catch {
     /* silencieux */
   }
@@ -142,44 +150,47 @@ async function startDemo() {
   game.start(true);
 }
 
-watch(game.state, async (val) => {
-  if (val !== "dead" || game.score.value === 0) return;
-  if (game.isDemo.value) return;
+watch(
+  () => game.state.value,
+  async (val) => {
+    if (val !== "dead" || game.score.value === 0) return;
+    if (game.isDemo.value) return;
 
-  saving.value = true;
-  adviceLoading.value = true;
-  saveError.value = "";
+    saving.value = true;
+    adviceLoading.value = true;
+    saveError.value = "";
 
-  // Récupère les données de replay avant de sauvegarder
-  const { seed, inputs } = game.getReplayData();
+    // Récupère les données de replay avant de sauvegarder
+    const { seed, inputs } = game.getReplayData();
 
-  const [scoreResult, adviceResult] = await Promise.allSettled([
-    saveScore({
-      score: game.score.value,
-      duration: game.getDuration(),
-      level: game.level.value,
-      seed,
-      inputs,
-    }),
-    getGameAdvice({
-      score: game.score.value,
-      duration: game.getDuration(),
-      level: game.level.value,
-    }),
-  ]);
+    const [scoreResult, adviceResult] = await Promise.allSettled([
+      saveScore({
+        score: game.score.value,
+        duration: game.getDuration(),
+        level: game.level.value,
+        seed,
+        inputs,
+      }),
+      getGameAdvice({
+        score: game.score.value,
+        duration: game.getDuration(),
+        level: game.level.value,
+      }),
+    ]);
 
-  if (scoreResult.status === "fulfilled") {
-    saved.value = true;
-  } else {
-    saveError.value = "Score non sauvegardé.";
-  }
-  saving.value = false;
+    if (scoreResult.status === "fulfilled") {
+      saved.value = true;
+    } else {
+      saveError.value = "Score non sauvegardé.";
+    }
+    saving.value = false;
 
-  if (adviceResult.status === "fulfilled") {
-    advice.value = adviceResult.value.data.advice;
-  }
-  adviceLoading.value = false;
-});
+    if (adviceResult.status === "fulfilled") {
+      advice.value = adviceResult.value.data.advice;
+    }
+    adviceLoading.value = false;
+  },
+);
 
 function emitKey(key) {
   game.handleKey({ key, preventDefault: () => {} });

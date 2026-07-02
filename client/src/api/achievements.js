@@ -1,10 +1,16 @@
 import api from '@/lib/api'
+import { getCached, setCached } from '@/api/cache'
 
 /**
- * Récupère tous les badges disponibles
+ * Récupère tous les badges disponibles (avec cache en mémoire)
  */
-export function getAllAchievements() {
-  return api.get('/achievements')
+export async function getAllAchievements() {
+  const cached = getCached('achievements')
+  if (cached) return { data: cached }
+
+  const result = await api.get('/achievements')
+  setCached('achievements', result.data)
+  return result
 }
 
 /**

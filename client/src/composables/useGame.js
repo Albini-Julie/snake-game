@@ -24,7 +24,19 @@ const DIR_NAME = {
   '1,0':  'RIGHT',
 }
 
-// ── Conditions des achievements solo (vérifiées côté client en temps réel) ───
+// RNG déterministe (Mulberry32)
+// Génère toujours la même séquence pour une seed donnée
+function createRng(seed) {
+  let s = seed
+  return function () {
+    s |= 0; s = s + 0x6D2B79F5 | 0
+    let t = Math.imul(s ^ s >>> 15, 1 | s)
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t
+    return ((t ^ t >>> 14) >>> 0) / 4294967296
+  }
+}
+
+// Conditions des achievements solo
 const ACHIEVEMENT_CONDITIONS = [
   { slug: 'first_catch',  check: (s, l, t) => s >= 1  },
   { slug: 'fish_hunter',  check: (s, l, t) => s >= 5  },
@@ -57,10 +69,14 @@ export function useGame(canvasRef, avatarColor = 240) {
   let stepCount  = 0
   let pendingDir = null
 
-  // Achievements déjà notifiés (persist entre les parties — NE PAS remettre à zéro)
+  // RNG et enregistrement
+  let rng       = null  // fonction RNG seedée
+  let gameSeed  = 0     // seed de la partie en cours
+  let inputLog  = []    // log des inputs { dir, t }
+
   let notifiedSlugs = new Set()
 
-  // ── Vérification achievements en temps réel ──────────────────────────────
+  // Vérification achievements
   function checkLiveAchievements() {
     const elapsedSec = Math.round((Date.now() - startTime) / 1000)
     const newUnlocks = []
@@ -79,15 +95,22 @@ export function useGame(canvasRef, avatarColor = 240) {
   }
 
   /**
-   * Pré-charge les achievements déjà débloqués en base pour éviter
-   * d'afficher des notifications pour des badges déjà obtenus
-   * @param {string[]} slugs - Slugs des achievements déjà débloqués
+   * Pré-charge les achievements déjà débloqués
+   * @param {string[]} slugs
    */
   function preloadUnlocked(slugs) {
     slugs.forEach(slug => notifiedSlugs.add(slug))
   }
 
-  // ── Dessin du poulpe ─────────────────────────────────────────────────────
+  /**
+   * Retourne la seed et les inputs de la partie pour sauvegarde
+   * @returns {{ seed: number, inputs: Array }}
+   */
+  function getReplayData() {
+    return { seed: gameSeed, inputs: inputLog }
+  }
+
+  // Dessin du poulpe
   function drawPoulpe(cx, cy, size, angle, color, isHead) {
     ctx.save()
     ctx.translate(cx, cy)
@@ -214,7 +237,7 @@ export function useGame(canvasRef, avatarColor = 240) {
     ctx.restore()
   }
 
-  // ── Rendu ─────────────────────────────────────────────────────────────────
+  // Rendu
   function draw() {
     const canvas = canvasRef.value
     if (!canvas) return
@@ -287,13 +310,13 @@ export function useGame(canvasRef, avatarColor = 240) {
     }
   }
 
-  // ── Logique de jeu ────────────────────────────────────────────────────────
+  // Logique de jeu
   function placeFruit() {
     const occupied = new Set(snake.map(s => `${s.x},${s.y}`))
     let fx, fy
     do {
-      fx = Math.floor(Math.random() * cols)
-      fy = Math.floor(Math.random() * rows)
+      fx = Math.floor(rng() * cols)
+      fy = Math.floor(rng() * rows)
     } while (occupied.has(`${fx},${fy}`))
     fruit = { x: fx, y: fy }
   }
@@ -336,7 +359,6 @@ export function useGame(canvasRef, avatarColor = 240) {
       placeFruit()
       restartLoop()
 
-      // Vérifie les achievements après chaque fruit mangé
       if (!isDemo.value) checkLiveAchievements()
     } else {
       snake.shift()
@@ -345,7 +367,7 @@ export function useGame(canvasRef, avatarColor = 240) {
     draw()
   }
 
-  // ── Particules de mort ────────────────────────────────────────────────────
+  // Particules de mort 
   let deathParticles = []
 
   function createDeathParticles() {
@@ -410,7 +432,6 @@ export function useGame(canvasRef, avatarColor = 240) {
     stopLoop()
     state.value = 'dying'
 
-    // Vérifie les achievements de survie au moment de la mort
     if (!isDemo.value) checkLiveAchievements()
 
     createDeathParticles()
@@ -434,9 +455,12 @@ export function useGame(canvasRef, avatarColor = 240) {
     nextDir            = { x: 1, y: 0 }
     pendingDir         = null
     stepCount          = 0
-    // notifiedSlugs intentionnellement PAS remis à zéro
-    // pour ne pas réafficher les achievements déjà débloqués
     justUnlocked.value = []
+
+    // Génère une seed aléatoire et initialise le RNG
+    gameSeed = Math.floor(Math.random() * 2147483647)
+    rng      = createRng(gameSeed)
+    inputLog = []
 
     const midX = Math.floor(cols / 2)
     const midY = Math.floor(rows / 2)
@@ -462,6 +486,12 @@ export function useGame(canvasRef, avatarColor = 240) {
     e.preventDefault()
     if (newDir.x === -dir.x && newDir.y === -dir.y) return
     nextDir = newDir
+
+    // Enregistre l'input avec son timestamp relatif au début de la partie
+    const dirName = DIR_NAME[`${newDir.x},${newDir.y}`]
+    if (dirName) {
+      inputLog.push({ dir: dirName, t: Date.now() - startTime })
+    }
   }
 
   function getDuration() {
@@ -472,6 +502,6 @@ export function useGame(canvasRef, avatarColor = 240) {
 
   return {
     score, bestScore, state, level, isDemo, justUnlocked,
-    init, start, handleKey, getDuration, preloadUnlocked
+    init, start, handleKey, getDuration, preloadUnlocked, getReplayData
   }
 }

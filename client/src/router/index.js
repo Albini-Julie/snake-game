@@ -47,6 +47,12 @@ const routes = [
     name: 'multiplayer',
     component: () => import('@/views/MultiplayerView.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/replay',
+    name: 'replay',
+    component: () => import('@/views/ReplayView.vue'),
+    meta: { requiresAuth: true }
   }
 ]
 

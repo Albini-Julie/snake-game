@@ -8,7 +8,6 @@
       :level="game.level.value"
     />
 
-    <!-- Canvas sans rounded -->
     <div
       class="relative border-2 border-game-border overflow-hidden"
       :style="{ width: CANVAS_W + 'px', height: CANVAS_H + 'px' }"
@@ -35,7 +34,6 @@
       />
     </div>
 
-    <!-- Contrôles mobile (masqués en mode démo) -->
     <div
       v-if="!game.isDemo.value"
       class="grid grid-cols-3 gap-2 mt-2 sm:hidden"
@@ -50,7 +48,6 @@
       >
     </div>
 
-    <!-- Info mode démo -->
     <p
       v-if="game.isDemo.value && game.state.value === 'playing'"
       class="font-game text-slate-600 text-center text-pixel-sm uppercase"
@@ -58,7 +55,6 @@
       IA controls the octopus
     </p>
 
-    <!-- Notification achievements -->
     <AchievementNotification
       :slugs="game.justUnlocked.value"
       :all-achievements="allAchievements"
@@ -154,11 +150,16 @@ watch(game.state, async (val) => {
   adviceLoading.value = true;
   saveError.value = "";
 
+  // Récupère les données de replay avant de sauvegarder
+  const { seed, inputs } = game.getReplayData();
+
   const [scoreResult, adviceResult] = await Promise.allSettled([
     saveScore({
       score: game.score.value,
       duration: game.getDuration(),
       level: game.level.value,
+      seed,
+      inputs,
     }),
     getGameAdvice({
       score: game.score.value,

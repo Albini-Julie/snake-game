@@ -7,6 +7,11 @@ export const createScoreSchema = z.object({
   score:    z.number().int().min(0),
   duration: z.number().positive(),
   level:    z.number().int().min(1).max(5).optional(),
+  seed:     z.number().int().optional(),
+  inputs:   z.array(z.object({
+    dir: z.enum(['UP', 'DOWN', 'LEFT', 'RIGHT']),
+    t:   z.number().int().min(0),
+  })).optional(),
 })
 
 // Users

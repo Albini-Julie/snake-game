@@ -10,6 +10,7 @@ import {
   getLeaderboard,
   getUserScores,
   getUserStats,
+  getWorldRecordReplay,
 } from '../services/scoreService.js'
 
 const router = Router()
@@ -19,14 +20,20 @@ const router = Router()
  * Enregistre un score en fin de partie
  */
 router.post('/', authMiddleware, validateBody(createScoreSchema), asyncHandler(async (req, res) => {
-  const { score, duration, level } = req.body
+  const { score, duration, level, seed, inputs } = req.body
 
   if (!isScoreCoherent(score, duration)) {
     throw httpError(400, 'Score incohérent avec la durée de partie')
   }
 
   const firstGame = await isFirstGame(req.user.id)
-  const data       = await createScore({ userId: req.user.id, value: score, durationMs: duration })
+  const { score: data, isWorldRecord } = await createScore({
+    userId:    req.user.id,
+    value:     score,
+    durationMs: duration,
+    seed,
+    inputs,
+  })
 
   const newAchievements = await checkAchievements({
     userId:      req.user.id,
@@ -36,7 +43,7 @@ router.post('/', authMiddleware, validateBody(createScoreSchema), asyncHandler(a
     isFirstGame: firstGame,
   })
 
-  res.status(201).json({ ...data, newAchievements })
+  res.status(201).json({ ...data, newAchievements, isWorldRecord })
 }))
 
 /**
@@ -44,6 +51,16 @@ router.post('/', authMiddleware, validateBody(createScoreSchema), asyncHandler(a
  */
 router.get('/leaderboard', asyncHandler(async (req, res) => {
   const data = await getLeaderboard()
+  res.json(data)
+}))
+
+/**
+ * GET /scores/replay
+ * Retourne les données du replay du record mondial
+ */
+router.get('/replay', asyncHandler(async (req, res) => {
+  const data = await getWorldRecordReplay()
+  if (!data) throw httpError(404, 'Aucun replay disponible')
   res.json(data)
 }))
 

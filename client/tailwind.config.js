@@ -26,7 +26,7 @@ export default {
       fontSize: {
         'pixel-xs': ['0.4rem',  { lineHeight: '1.6' }],
         'pixel-sm': ['0.55rem', { lineHeight: '1.6' }],
-        'pixel-md': ['0.7rem',  { lineHeight: '1.6' }],
+        'pixel-md': ['0.6rem',  { lineHeight: '1.6' }],
         'pixel-lg': ['0.85rem', { lineHeight: '1.6' }],
         'pixel-xl': ['1rem',    { lineHeight: '1.4' }],
       }

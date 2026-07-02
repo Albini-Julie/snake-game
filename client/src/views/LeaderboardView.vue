@@ -96,6 +96,7 @@
       <!-- Actions -->
       <div class="flex justify-center gap-4">
         <AppButton @click="router.push('/game')">Play</AppButton>
+        <AppButton @click="router.push('/replay')"> WATCH RECORD </AppButton>
         <AppButton variant="secondary" @click="load">Refresh</AppButton>
       </div>
     </div>

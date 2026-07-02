@@ -3,8 +3,8 @@ import api from '@/lib/api'
 /**
  * Enregistre un score en fin de partie
  */
-export function saveScore({ score, duration, level }) {
-  return api.post('/scores', { score, duration, level })
+export function saveScore({ score, duration, level, seed, inputs }) {
+  return api.post('/scores', { score, duration, level, seed, inputs })
 }
 
 /**
@@ -26,4 +26,8 @@ export function getMyStats() {
  */
 export function getMyScores() {
   return api.get('/scores/me')
+}
+
+export function getWorldRecordReplay() {
+  return api.get('/scores/replay')
 }

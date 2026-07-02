@@ -8,6 +8,7 @@ Un jeu de Snake revisité avec un poulpe, développé dans le cadre du cours de 
 - [Stack technique](#stack-technique)
 - [Architecture](#architecture)
 - [Authentification](#authentification)
+- [Gestion des flux et états](#gestion-des-flux-et-états)
 - [Installation](#installation)
 - [Variables d'environnement](#variables-denvironnement)
 - [Structure du projet](#structure-du-projet)
@@ -196,6 +197,128 @@ if (event === "SIGNED_OUT") {
   profile.value = null;
 }
 ```
+
+## Gestion des flux et états
+
+Le projet implémente une gestion complète des états pour chaque flux de données, avec une séparation claire entre la couche API (`client/src/api/`), la logique métier (`server/services/`) et l'affichage.
+
+### Flux 1 - Jeu solo (`useGame.js`)
+
+Le composable `useGame` gère l'intégralité du cycle de vie d'une partie :
+
+| État     | Valeur    | Description                         |
+| -------- | --------- | ----------------------------------- |
+| Inactif  | `idle`    | Écran d'accueil avant le début      |
+| En cours | `playing` | Partie en cours                     |
+| Mort     | `dying`   | Animation de mort en cours          |
+| Terminé  | `dead`    | Partie terminée, scores sauvegardés |
+
+```js
+// Transitions d'état dans useGame.js
+state.value = "playing"; // au démarrage
+state.value = "dying"; // à la collision
+state.value = "dead"; // après l'animation
+```
+
+**Gestion des erreurs** : si la sauvegarde du score échoue, un message d'erreur est affiché dans l'overlay de fin de partie via `saveError`.
+
+```js
+// GameView.vue
+const saving = ref(false); // chargement
+const saved = ref(false); // succès
+const saveError = ref(""); // erreur
+```
+
+### Flux 2 - Sauvegarde du score (`POST /scores`)
+
+Déclenché automatiquement à la fin de chaque partie :
+
+```
+Fin de partie → saveScore() → POST /scores → validation Zod
+     ↓                                            ↓
+saving = true                              400 si score invalide
+     ↓                                            ↓
+saved = true                          anti-triche (MAX_SCORE_PER_SECOND)
+     ↓                                            ↓
+newAchievements débloqués          checkAchievements() → notifications
+```
+
+Les erreurs sont visibles dans l'overlay via `saveError` et loggées côté serveur via Pino.
+
+### Flux 3 - Leaderboard (`GET /scores/leaderboard`)
+
+```js
+// LeaderboardView.vue
+const loading = ref(true); // chargement initial
+const error = ref(""); // erreur réseau ou serveur
+const scores = ref([]); // données affichées
+```
+
+L'utilisateur voit un spinner `LOADING...` pendant le chargement, un message d'erreur clair en cas d'échec, et le tableau vide avec un appel à l'action si aucun score n'existe.
+
+### Flux 4 - Profil et achievements (`ProfileView.vue`)
+
+Quatre requêtes parallèles chargées via `Promise.all` au montage :
+
+```js
+const [statsRes, historyRes, allRes, myRes] = await Promise.all([
+  getMyStats(), // statistiques agrégées
+  getMyScores(), // historique des 10 dernières parties
+  getAllAchievements(), // tous les badges disponibles
+  getMyAchievements(), // badges débloqués par le joueur
+]);
+```
+
+Un état `loading` unique couvre les quatre requêtes. En cas d'erreur, les données restent vides sans bloquer l'affichage.
+
+### Flux 5 - Achievements en temps réel
+
+Les achievements sont vérifiés **côté client pendant la partie** (score, niveau, durée) via `ACHIEVEMENT_CONDITIONS` dans `useGame.js`, et **côté serveur à la sauvegarde** via `checkAchievements()` dans `achievementService.js`.
+
+```js
+// Notification immédiate dès que la condition est remplie
+justUnlocked.value = newUnlocks;
+// → AchievementNotification.vue affiche la popup
+```
+
+Les badges déjà débloqués sont préchargés au montage pour éviter les faux positifs :
+
+```js
+game.preloadUnlocked(alreadyUnlocked); // charge depuis /achievements/me
+```
+
+### Flux 6 - Multijoueur temps réel (`useMultiplayer.js`)
+
+Le flux multijoueur gère des états distincts via Socket.io :
+
+| État        | Description                     |
+| ----------- | ------------------------------- |
+| `idle`      | Pas connecté                    |
+| `waiting`   | En attente d'un adversaire      |
+| `countdown` | Compte à rebours avant le début |
+| `playing`   | Partie en cours                 |
+| `finished`  | Partie terminée avec résultats  |
+| `abandoned` | L'adversaire a quitté           |
+
+Les erreurs de room (code invalide, room pleine) sont affichées via `errorMsg` directement dans l'interface multijoueur.
+
+### Modularisation API/Service
+
+Chaque flux respecte une séparation stricte des responsabilités :
+
+```
+Vue (affichage)
+    ↓
+client/src/api/*.js (appels HTTP nommés)
+    ↓
+server/routes/*.js (transport HTTP uniquement)
+    ↓
+server/services/*.js (logique métier pure)
+    ↓
+Supabase / Mistral AI
+```
+
+Cette architecture garantit que chaque couche peut être testée, modifiée ou remplacée indépendamment.
 
 ## Installation
 

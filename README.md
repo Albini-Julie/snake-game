@@ -175,6 +175,8 @@ api.interceptors.request.use(async (config) => {
 });
 ```
 
+Les mots de passe sont hashés automatiquement par Supabase Auth (bcrypt) : ils ne sont jamais stockés en clair ni accessibles depuis l'API.
+
 ### Gestion de l'expiration et déconnexion
 
 - **Expiration** : le store Pinia `auth.js` écoute l'événement `TOKEN_REFRESHED` de Supabase et met à jour l'utilisateur automatiquement. Le token est renouvelé de façon transparente avant son expiration.

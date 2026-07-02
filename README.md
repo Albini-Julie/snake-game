@@ -7,6 +7,7 @@ Un jeu de Snake revisité avec un poulpe, développé dans le cadre du cours de 
 - [Fonctionnalités](#fonctionnalités)
 - [Stack technique](#stack-technique)
 - [Architecture](#architecture)
+- [Authentification](#authentification)
 - [Installation](#installation)
 - [Variables d'environnement](#variables-denvironnement)
 - [Structure du projet](#structure-du-projet)
@@ -14,16 +15,17 @@ Un jeu de Snake revisité avec un poulpe, développé dans le cadre du cours de 
 
 ## Fonctionnalités
 
-- **Authentification** — inscription et connexion via Supabase Auth
-- **Avatars personnalisables** — choix parmi plusieurs poulpes colorés
-- **Jeu Snake solo** — rendu Canvas HTML5, niveaux de difficulté progressifs
-- **Mode démo IA** — un poulpe piloté automatiquement par Mistral AI
-- **Conseils de jeu personnalisés** — générés par IA après chaque partie
-- **Pseudos générés par IA** — suggestions à l'inscription
-- **Mode multijoueur** — deux joueurs en temps réel via WebSockets (matchmaking automatique ou room avec code)
-- **Leaderboard** — classement global des meilleurs scores
-- **Profil joueur** — statistiques personnelles et historique des parties
-- **Système d'achievements** — badges débloqués selon les performances
+- **Authentification** : inscription et connexion via Supabase Auth
+- **Avatars personnalisables** : choix parmi plusieurs poulpes colorés
+- **Jeu Snake solo** : rendu Canvas HTML5, niveaux de difficulté progressifs
+- **Mode démo IA** : un poulpe piloté automatiquement par Mistral AI
+- **Conseils de jeu personnalisés** : générés par IA après chaque partie
+- **Pseudos générés par IA** : suggestions à l'inscription
+- **Mode multijoueur** : deux joueurs en temps réel via WebSockets (matchmaking automatique ou room avec code)
+- **Leaderboard** : classement global des meilleurs scores
+- **Profil joueur** : statistiques personnelles et historique des parties
+- **Système d'achievements** : badges débloqués selon les performances
+- **Replay du record mondial** : rejouer la meilleure partie jamais réalisée
 
 ## Stack technique
 
@@ -82,6 +84,118 @@ Le projet suit une architecture en couches, côté backend comme côté logique 
 ```
 
 **Principe clé** : les routes Express ne contiennent aucune logique métier : elles délèguent systématiquement aux fichiers du dossier `services/`. De la même façon, `multiplayer.js` ne gère que le transport Socket.io et délègue toute la logique du jeu à `services/gameEngine.js`, qui est un module pur sans dépendance réseau.
+
+## Authentification
+
+L'authentification est gérée par **Supabase Auth** côté backend et exposée via des routes Express dédiées.
+
+### Routes d'authentification
+
+| Méthode | Route             | Description                                                | Auth requise |
+| ------- | ----------------- | ---------------------------------------------------------- | ------------ |
+| `POST`  | `/users/register` | Inscription : crée un compte Supabase Auth + entrée en BDD | Non          |
+| `POST`  | `/users/login`    | Connexion : vérifie les identifiants et retourne un JWT    | Non          |
+
+#### POST `/users/register`
+
+```json
+// Body
+{
+  "email": "julie@example.com",
+  "password": "motdepasse",
+  "username": "Julie"
+}
+
+// Réponse 201
+{
+  "user": { "id": "uuid", "email": "julie@example.com" },
+  "session": { "access_token": "eyJ...", "expires_at": 1234567890 }
+}
+```
+
+#### POST `/users/login`
+
+```json
+// Body
+{
+  "email": "julie@example.com",
+  "password": "motdepasse"
+}
+
+// Réponse 200
+{
+  "user": { "id": "uuid", "email": "julie@example.com" },
+  "session": { "access_token": "eyJ...", "expires_at": 1234567890 }
+}
+```
+
+### Middleware JWT (`server/middleware/auth.js`)
+
+Toutes les routes sensibles sont protégées par un middleware qui :
+
+1. Extrait le token du header `Authorization: Bearer <token>`
+2. Vérifie sa validité via `supabase.auth.getUser(token)`
+3. Attache l'utilisateur à `req.user` pour les handlers suivants
+4. Retourne une erreur `401` si le token est absent ou invalide
+
+```js
+// Exemple d'utilisation sur une route
+router.post(
+  "/scores",
+  authMiddleware,
+  asyncHandler(async (req, res) => {
+    // req.user est disponible ici
+  }),
+);
+```
+
+**Routes protégées par le middleware :**
+
+- `POST /scores` : sauvegarder un score
+- `GET /scores/stats` : statistiques personnelles
+- `GET /scores/me` : historique personnel
+- `PUT /users/avatar` : changer d'avatar
+- `GET /users/me` : profil utilisateur
+- `GET /achievements/me` : achievements débloqués
+
+### Stockage et transmission du token côté frontend
+
+Le token JWT est géré automatiquement par le SDK Supabase :
+
+- **Stockage** : le token est stocké dans le `localStorage` du navigateur par le SDK Supabase
+- **Transmission** : le client Axios (`client/src/lib/api.js`) dispose d'un intercepteur qui récupère le token de la session active et l'injecte dans le header `Authorization` de chaque requête :
+
+```js
+api.interceptors.request.use(async (config) => {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+```
+
+### Gestion de l'expiration et déconnexion
+
+- **Expiration** : le store Pinia `auth.js` écoute l'événement `TOKEN_REFRESHED` de Supabase et met à jour l'utilisateur automatiquement. Le token est renouvelé de façon transparente avant son expiration.
+- **Déconnexion** : le bouton EXIT dans le header appelle `auth.logout()` qui :
+  1. Appelle `supabase.auth.signOut()` pour invalider la session côté Supabase
+  2. Vide `user` et `profile` dans le store Pinia
+  3. Redirige vers `/login` via Vue Router
+
+```js
+// store/auth.js
+async function logout() {
+  await supabase.auth.signOut();
+  user.value = null;
+  profile.value = null;
+}
+
+// Sur l'événement SIGNED_OUT
+if (event === "SIGNED_OUT") {
+  user.value = null;
+  profile.value = null;
+}
+```
 
 ## Installation
 
@@ -169,9 +283,10 @@ Voir `.env.example` dans chaque dossier pour le détail complet.
 snake-game/
 ├── client/                    # Frontend Vue 3
 │   ├── src/
+│   │   ├── api/                # Couche d'abstraction API (scores, users, ai...)
 │   │   ├── views/              # Pages (Login, Game, Multiplayer, Profile...)
 │   │   ├── components/         # Composants réutilisables (ui/, game/, leaderboard/...)
-│   │   ├── composables/        # Logique réutilisable (useGame, useMultiplayer)
+│   │   ├── composables/        # Logique réutilisable (useGame, useMultiplayer, useSound)
 │   │   ├── stores/              # State Pinia (auth)
 │   │   ├── lib/                # Clients API et Supabase
 │   │   └── router/              # Configuration Vue Router
@@ -180,9 +295,9 @@ snake-game/
 └── server/                     # Backend Express
     ├── routes/                  # Définition des routes HTTP (fines)
     ├── services/                 # Logique métier (scores, users, IA, jeu...)
-    ├── middleware/                # Auth, rate limiting, gestion d'erreurs
+    ├── middleware/                # Auth JWT, rate limiting, gestion d'erreurs
     ├── schemas/                   # Schémas de validation Zod
-    ├── config/                    # Connexion Supabase, logger
+    ├── config/                    # Connexion Supabase, logger Pino
     ├── multiplayer.js             # Transport Socket.io (délègue à gameEngine)
     └── index.js                   # Point d'entrée Express
 ```
@@ -203,3 +318,7 @@ npm run dev       # Démarre le serveur de développement Vite
 npm run build      # Build de production
 npm run preview     # Prévisualise le build de production
 ```
+
+---
+
+Projet réalisé dans le cadre du cours Développement Front-End / Back-End - 2026

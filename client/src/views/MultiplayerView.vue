@@ -165,83 +165,99 @@
     </div>
 
     <!-- ── Canvas ── -->
-    <div
-      v-show="
-        state === 'playing' || state === 'finished' || state === 'abandoned'
-      "
-      class="relative border-2 border-game-border overflow-hidden"
-      :style="{ width: CANVAS_SIZE + 'px', height: CANVAS_SIZE + 'px' }"
-    >
-      <canvas
-        ref="canvasRef"
-        :width="CANVAS_SIZE"
-        :height="CANVAS_SIZE"
-        class="block"
-      />
-
-      <!-- HUD scores -->
-      <div
-        class="absolute top-2 left-0 right-0 flex justify-between px-3 pointer-events-none"
-      >
-        <div
-          v-for="(p, i) in players"
-          :key="p.id"
-          class="flex flex-col items-center"
+    <div class="flex flex-col md:flex-row-reverse items-center gap-10">
+      <div v-if="isTouchDevice" class="grid grid-cols-3 gap-2 mt-2">
+        <div />
+        <AppButton variant="secondary" @click="emitKey('ArrowUp')">▲</AppButton>
+        <div />
+        <AppButton variant="secondary" @click="emitKey('ArrowLeft')"
+          >◄</AppButton
         >
-          <p
-            class="font-game text-pixel-sm"
-            :style="{ color: mp.PLAYER_COLORS[i].head }"
-          >
-            {{ p.username }}
-          </p>
-          <p class="font-game text-white text-lg">{{ p.score }}</p>
-        </div>
+        <AppButton variant="secondary" @click="emitKey('ArrowDown')"
+          >▼</AppButton
+        >
+        <AppButton variant="secondary" @click="emitKey('ArrowRight')"
+          >►</AppButton
+        >
       </div>
-
-      <!-- Overlay Game Over -->
       <div
-        v-if="state === 'finished' || state === 'abandoned'"
-        class="absolute inset-0 flex flex-col items-center justify-center bg-game-bg/85 gap-4"
+        v-show="
+          state === 'playing' || state === 'finished' || state === 'abandoned'
+        "
+        class="relative border-2 border-game-border overflow-hidden"
+        :style="{ width: CANVAS_SIZE + 'px', height: CANVAS_SIZE + 'px' }"
       >
-        <p
-          class="font-game text-pixel-lg"
-          :class="
-            winner?.id === myPlayerId ? 'text-yellow-400' : 'text-red-400'
-          "
-        >
-          {{ winner?.id === myPlayerId ? "YOU WIN!" : "GAME OVER" }}
-        </p>
+        <canvas
+          ref="canvasRef"
+          :width="CANVAS_SIZE"
+          :height="CANVAS_SIZE"
+          class="block"
+        />
 
-        <p
-          v-if="state === 'abandoned'"
-          class="font-game text-slate-400 text-pixel-sm"
+        <!-- HUD scores -->
+        <div
+          class="absolute top-2 left-0 right-0 flex justify-between px-3 pointer-events-none"
         >
-          {{ errorMsg }}
-        </p>
-        <template v-else>
-          <p v-if="winner" class="font-game text-yellow-400 text-pixel-sm">
-            {{ winner.username }} WINS!
-          </p>
-          <p v-else class="font-game text-slate-400 text-pixel-sm uppercase">
-            equality !
-          </p>
-          <div class="flex flex-col gap-1 mt-2">
+          <div
+            v-for="(p, i) in players"
+            :key="p.id"
+            class="flex flex-col items-center"
+          >
             <p
-              v-for="(p, i) in players"
-              :key="p.id"
               class="font-game text-pixel-sm"
               :style="{ color: mp.PLAYER_COLORS[i].head }"
             >
-              {{ p.username }} : {{ p.score }}
+              {{ p.username }}
             </p>
+            <p class="font-game text-white text-lg">{{ p.score }}</p>
           </div>
-        </template>
+        </div>
 
-        <div class="flex gap-3 mt-2">
-          <AppButton @click="resetAndGoLobby">PLAY AGAIN</AppButton>
-          <AppButton variant="secondary" @click="router.push('/game')"
-            >SOLO</AppButton
+        <!-- Overlay Game Over -->
+        <div
+          v-if="state === 'finished' || state === 'abandoned'"
+          class="absolute inset-0 flex flex-col items-center justify-center bg-game-bg/85 gap-4"
+        >
+          <p
+            class="font-game text-pixel-lg"
+            :class="
+              winner?.id === myPlayerId ? 'text-yellow-400' : 'text-red-400'
+            "
           >
+            {{ winner?.id === myPlayerId ? "YOU WIN!" : "GAME OVER" }}
+          </p>
+
+          <p
+            v-if="state === 'abandoned'"
+            class="font-game text-slate-400 text-pixel-sm"
+          >
+            {{ errorMsg }}
+          </p>
+          <template v-else>
+            <p v-if="winner" class="font-game text-yellow-400 text-pixel-sm">
+              {{ winner.username }} WINS!
+            </p>
+            <p v-else class="font-game text-slate-400 text-pixel-sm uppercase">
+              equality !
+            </p>
+            <div class="flex flex-col gap-1 mt-2">
+              <p
+                v-for="(p, i) in players"
+                :key="p.id"
+                class="font-game text-pixel-sm"
+                :style="{ color: mp.PLAYER_COLORS[i].head }"
+              >
+                {{ p.username }} : {{ p.score }}
+              </p>
+            </div>
+          </template>
+
+          <div class="flex gap-3 mt-2">
+            <AppButton @click="resetAndGoLobby">PLAY AGAIN</AppButton>
+            <AppButton variant="secondary" @click="router.push('/game')"
+              >SOLO</AppButton
+            >
+          </div>
         </div>
       </div>
     </div>
@@ -275,6 +291,8 @@ const { state, roomId, countdown, players, winner, errorMsg } = mp;
 
 const showJoinForm = ref(false);
 const roomCode = ref("");
+
+const isTouchDevice = ref("ontouchstart" in window);
 
 const myPlayerId = computed(
   () => mp.players.value[mp.myIndex.value]?.id ?? null,

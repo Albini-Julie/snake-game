@@ -327,6 +327,10 @@ function handleJoinRoom() {
   mp.joinRoom(username, roomCode.value.toUpperCase());
 }
 
+function emitKey(key) {
+  mp.handleKey({ key, preventDefault: () => {} });
+}
+
 function resetAndGoLobby() {
   mp.disconnect();
   showJoinForm.value = false;

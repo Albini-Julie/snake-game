@@ -125,8 +125,8 @@ export function setupMultiplayer(io) {
       socket.data.roomId   = roomId
       socket.join(roomId)
 
-      const snake1 = createSnake(4,  10, 'RIGHT')
-      const snake2 = createSnake(15, 10, 'LEFT')
+      const snake1 = createSnake(4,  4,  'RIGHT')  // Joueur 1 : coin haut-gauche
+      const snake2 = createSnake(15, 15, 'LEFT')   // Joueur 2 : coin bas-droite
 
       room.players[0].snake = snake1
       room.players.push({ id: socket.id, userId, username, snake: snake2, dir: 'LEFT', nextDir: 'LEFT', score: 0, alive: true })

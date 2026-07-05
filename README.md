@@ -461,4 +461,5 @@ npm run preview     # Prévisualise le build de production
 
 ---
 
+Disponible en ligne : https://poulpentin.albini.fr/
 Projet réalisé dans le cadre du cours Développement Front-End / Back-End - 2026

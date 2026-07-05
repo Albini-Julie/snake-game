@@ -62,8 +62,8 @@ export function createSnake(startX, startY, dir) {
  * @returns {object} État initial du jeu
  */
 export function createGameState(p1, p2) {
-  const snake1 = createSnake(4,  10, 'RIGHT')
-  const snake2 = createSnake(15, 10, 'LEFT')
+  const snake1 = createSnake(4,  4,  'RIGHT')  // Joueur 1 : coin haut-gauche
+  const snake2 = createSnake(15, 15, 'LEFT')   // Joueur 2 : coin bas-droite
 
   return {
     players: [

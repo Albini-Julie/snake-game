@@ -499,7 +499,7 @@ Validation : tous les schémas Zod centralisés dans server/schemas/index.js, ap
 Logs : Pino exclusivement, jamais de console.log, toujours avec un contexte structuré ({ userId, socketId })
 Style : Tailwind CSS uniquement, pas de fichiers .css séparés (sauf animations spécifiques en <style scoped>)
 
-Voir aussi [UI_GUIDE.md](./UI_GUIDE.md) pour les conventions visuelles détaillées.
+Voir aussi [UI_GUIDE.md](./UIGUIDE.md) pour les conventions visuelles détaillées.
 
 ---
 

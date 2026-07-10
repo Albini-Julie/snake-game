@@ -13,6 +13,8 @@ Un jeu de Snake revisité avec un poulpe, développé dans le cadre du cours de 
 - [Variables d'environnement](#variables-denvironnement)
 - [Structure du projet](#structure-du-projet)
 - [Scripts disponibles](#scripts-disponibles)
+- [Conventions](#conventions)
+- [Liens rendus](#liens-rendus)
 
 ## Fonctionnalités
 
@@ -461,9 +463,51 @@ npm run preview     # Prévisualise le build de production
 
 ---
 
+## Conventions
+
+### Commits
+
+Préfixe [TASK] : lorsque ajout de fonctionnalité ou de nouveaux éléments
+Préfixe [BUGFIX] : lorsque fix de bugs
+Préfixe [FRONTEND] : lorsque la tache ou le bugfix concerne le frontend
+Préfixe [BACKEND] : lorsque la tache ou le bugfix concerne le backend
+Les deux préfixes [FRONTEND] [BACKEND] peuvent être combinés quand une tâche touche les deux couches
+
+Toujours ajouter un petit descriptif à chaque commit pour qu'on comprenne ce que contient le commit.
+
+Exemples réels du projet :
+
+[TASK] [BACKEND] validation centralisee, gestion d'erreurs et logs structures
+[BUGFIX] [FRONTEND] correction casse fichiers pour Linux/Vercel
+[TASK] [FRONTEND] [BACKEND] Replay du record mondial
+
+### Branches
+
+Projet individuel développé principalement sur main, avec une branche succes-system utilisée pour développer le système d'achievements de façon isolée avant fusion.
+
+main : branche de production, toujours stable et déployée automatiquement (Vercel + Railway)
+Branches de fonctionnalité ponctuelles fusionnées via git merge en fast-forward une fois stabilisées
+
+Piste d'amélioration : pour un projet en équipe, cette stratégie évoluerait vers une branche par fonctionnalité (feature/nom), des Pull Requests avec revue de code, et une branche develop intermédiaire entre les fonctionnalités et main.
+
+### Code
+
+Nommage : fichiers Vue en PascalCase, composables préfixés use, fonctions en camelCase avec verbe d'action explicite, constantes globales en SCREAMING_SNAKE_CASE
+Routes backend : ne contiennent jamais de logique métier, délèguent systématiquement à services/
+Gestion des erreurs : asyncHandler sur toutes les routes async, httpError(status, message) pour les erreurs métier, middleware errorHandler centralisé
+Validation : tous les schémas Zod centralisés dans server/schemas/index.js, appliqués via le middleware validateBody
+Logs : Pino exclusivement, jamais de console.log, toujours avec un contexte structuré ({ userId, socketId })
+Style : Tailwind CSS uniquement, pas de fichiers .css séparés (sauf animations spécifiques en <style scoped>)
+
+Voir aussi [UI_GUIDE.md](./UI_GUIDE.md) pour les conventions visuelles détaillées.
+
+---
+
 ## Liens rendus
 
 Trello : https://trello.com/invite/b/6a50a0bdf00ae89ec3d6ade9/ATTI3ad5e505403080c3643d65383f9eb0c21238D848/poulpentin
 Disponible en ligne : https://poulpentin.albini.fr/
+
+---
 
 Projet réalisé dans le cadre du cours Développement Front-End / Back-End - 2026

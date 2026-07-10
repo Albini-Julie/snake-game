@@ -461,5 +461,9 @@ npm run preview     # Prévisualise le build de production
 
 ---
 
+## Liens rendus
+
+Trello : https://trello.com/invite/b/6a50a0bdf00ae89ec3d6ade9/ATTI3ad5e505403080c3643d65383f9eb0c21238D848/poulpentin
 Disponible en ligne : https://poulpentin.albini.fr/
+
 Projet réalisé dans le cadre du cours Développement Front-End / Back-End - 2026

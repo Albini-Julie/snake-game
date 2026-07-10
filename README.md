@@ -507,6 +507,7 @@ Voir aussi [UI_GUIDE.md](./UIGUIDE.md) pour les conventions visuelles détaillé
 
 Trello : https://trello.com/invite/b/6a50a0bdf00ae89ec3d6ade9/ATTI3ad5e505403080c3643d65383f9eb0c21238D848/poulpentin
 Disponible en ligne : https://poulpentin.albini.fr/
+Démonstrations videos : https://drive.google.com/drive/folders/1h6oJkfXZWFUMvvCBRf6RRIh7YuZetHXx?usp=sharing
 
 ---
 
